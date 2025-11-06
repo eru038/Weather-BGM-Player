@@ -1,1 +1,146 @@
-hello
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spotify Playlist Viewer</title>
+  <style>
+    body {
+      background: #121212;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      text-align: center;
+    }
+
+    header {
+      background: #1db954;
+      color: white;
+      padding: 10px;
+    }
+
+    button {
+      background: #1db954;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+
+    button:hover { background: #1ed760; }
+
+    #playlists {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 20px;
+      gap: 20px;
+    }
+
+    .playlist {
+      width: 160px;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .playlist:hover {
+      transform: scale(1.05);
+    }
+
+    .playlist img {
+      width: 160px;
+      height: 160px;
+      border-radius: 10px;
+      object-fit: cover;
+    }
+
+    iframe {
+      margin-top: 30px;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🎧 あなたのSpotifyプレイリスト</h1>
+  </header>
+
+  <button id="loginBtn">Spotifyでログイン</button>
+  <div id="playlists"></div>
+
+  <div id="player"></div>
+
+  <script>
+    const CLIENT_ID = "YOUR_SPOTIFY_CLIENT_ID"; // ← 自分のSpotifyアプリのClient IDを入力
+    const REDIRECT_URI = window.location.origin + window.location.pathname; 
+    const SCOPES = "playlist-read-private";
+
+    // 認証URLを作成してリダイレクト
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      const authUrl =
+        "https://accounts.spotify.com/authorize" +
+        "?client_id=" + CLIENT_ID +
+        "&response_type=token" +
+        "&redirect_uri=" + encodeURIComponent(REDIRECT_URI) +
+        "&scope=" + encodeURIComponent(SCOPES);
+      window.location.href = authUrl;
+    });
+
+    // リダイレクト後にトークン取得
+    function handleRedirect() {
+      const hash = window.location.hash;
+      if (!hash) return;
+      const token = new URLSearchParams(hash.substring(1)).get("access_token");
+      if (token) {
+        localStorage.setItem("spotify_token", token);
+        window.location.hash = "";
+        getUserPlaylists(token);
+      }
+    }
+
+    // 保存済みトークンがあれば使う
+    const savedToken = localStorage.getItem("spotify_token");
+    if (savedToken) getUserPlaylists(savedToken);
+    else handleRedirect();
+
+    // 🎵 プレイリスト取得
+    async function getUserPlaylists(token) {
+      document.getElementById("loginBtn").style.display = "none";
+      const res = await fetch("https://api.spotify.com/v1/me/playlists", {
+        headers: { Authorization: "Bearer " + token }
+      });
+      const playlists = await res.json();
+
+      const container = document.getElementById("playlists");
+      container.innerHTML = "<h3>あなたのプレイリスト一覧</h3>";
+
+      playlists.items.forEach(pl => {
+        const div = document.createElement("div");
+        div.className = "playlist";
+        div.innerHTML = `
+          <img src="${pl.images?.[0]?.url || ''}">
+          <p>${pl.name}</p>
+        `;
+        div.addEventListener("click", () => embedPlaylist(pl.id));
+        container.appendChild(div);
+      });
+    }
+
+    // 🎧 iframeにプレイリストを埋め込む
+    function embedPlaylist(id) {
+      const player = document.getElementById("player");
+      player.innerHTML = `
+        <iframe style="border-radius:12px"
+          src="https://open.spotify.com/embed/playlist/${id}?utm_source=generator"
+          width="80%" height="380" frameBorder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"></iframe>
+      `;
+      player.scrollIntoView({ behavior: "smooth" });
+    }
+  </script>
+</body>
+</html>
