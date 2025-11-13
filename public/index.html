@@ -636,7 +636,7 @@
     localStorage.removeItem('spotify_refresh_token');
 
     const logoutUrl = 'https://accounts.spotify.com/logout?continue=' 
-                      + encodeURIComponent(window.location.origin + '/index.html');
+                      + encodeURIComponent(window.location.origin + '/login.html');
     window.location.href = logoutUrl;
   } catch (err) {
     console.error('ログアウト失敗:', err);
