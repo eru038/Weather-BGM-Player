@@ -39,6 +39,7 @@
     <button onclick="changePage('home')">🏠 ホーム</button>
     <button onclick="changePage('playlist')">🎵 プレイリスト</button>
     <button onclick="changePage('settings')">⚙️ 設定</button>
+    <button id="login-btn" class="spotify-btn"></button>
   </nav>
 
   <main id="content">
@@ -643,6 +644,30 @@
     alert('ログアウトに失敗しました。');
   }
 }
+    async function updateNavLoginButton() {
+  const loginBtn = document.getElementById('login-btn');
+  try {
+    // サーバーにアクセスしてログイントークンがあるか確認
+    const res = await fetch('/token', { credentials: 'include' });
+    if (res.ok) {
+      loginBtn.textContent = 'Spotify ログアウト';
+      loginBtn.style.background = '#e53935';
+      loginBtn.onclick = logoutSpotify;
+    } else {
+      loginBtn.textContent = 'Spotify ログイン';
+      loginBtn.style.background = '#1db954';
+      loginBtn.onclick = () => { window.location.href = '/login'; };
+    }
+  } catch (err) {
+    console.error(err);
+    loginBtn.textContent = 'Spotify ログイン';
+    loginBtn.style.background = '#1db954';
+    loginBtn.onclick = () => { window.location.href = '/login'; };
+  }
+}
+
+// ページ読み込み時に更新
+updateNavLoginButton();
 
 
   </script>
