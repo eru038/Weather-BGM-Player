@@ -631,14 +631,17 @@
     }
     async function logoutSpotify() {
   try {
-    // サーバー側でSpotifyトークンを削除
+    // 1. サーバー側でトークンを削除
     await fetch('/logout', { method: 'POST', credentials: 'include' });
 
-    // localStorageなどクライアント側の情報をクリア
+    // 2. クライアント側の情報をクリア
     localStorage.removeItem('spotify_access_token');
     localStorage.removeItem('spotify_refresh_token');
 
-    window.location.href = '/'; 
+    // 3. Spotify公式のログアウトページにリダイレクト
+    const logoutUrl = 'https://accounts.spotify.com/logout?continue=' + encodeURIComponent(window.location.origin);
+    window.location.href = logoutUrl;
+
   } catch (err) {
     console.error('ログアウト失敗:', err);
     alert('ログアウトに失敗しました。');
