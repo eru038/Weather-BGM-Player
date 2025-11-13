@@ -637,9 +637,7 @@
     localStorage.removeItem('spotify_access_token');
     localStorage.removeItem('spotify_refresh_token');
 
-    // Spotify公式アカウントのログインも切りたい場合
-    const logoutUrl = 'https://accounts.spotify.com/logout?continue=' + encodeURIComponent(window.location.origin);
-    window.location.href = logoutUrl;
+    window.location.href = '/index.html'; 
   } catch (err) {
     console.error('ログアウト失敗:', err);
     alert('ログアウトに失敗しました。');
