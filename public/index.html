@@ -48,6 +48,7 @@
     <button onclick="changePage('home')">🏠 ホーム</button>
     <button onclick="changePage('playlist')">🎵 プレイリスト</button>
     <button onclick="changePage('settings')">⚙️ 設定</button>
+    <button id="btn-logout" onclick="logout()">🚪 ログアウト</button>
   </nav>
 
   <main id="content">
@@ -229,9 +230,7 @@
           content.innerHTML = `
             <h1>⚙️ 設定</h1>
             <button class="spotify-btn" onclick="connectSpotify()">Spotify 連携</button>
-            <!-- settingsページに追加 -->
-            <button class="spotify-btn" onclick="logoutSpotify()" style="margin-top:10px;background:#ff4d4d;">Spotify ログアウト</button>
-
+            
             <div class="color-picker">
               <label>テーマカラーを選択：</label>
               <input type="color" id="color-input" />
@@ -566,42 +565,35 @@
       const from = window.__CURRENT_PAGE__ || 'home';
       window.location.href = '/login?from=' + encodeURIComponent(from);
     }
-    async function logoutSpotify() {
+    async function logout() {
   try {
-    // サーバー側のセッション削除
+    // 1. サーバー側セッション破棄
     await fetch('/logout', { method: 'POST', credentials: 'include' });
+
+    // 2. クライアント側フラグやトークンをクリア
+    localStorage.removeItem('spotify_token');
+    // 必要に応じてユーザー情報も削除
+    window.__CURRENT_PAGE__ = 'home';
+    IS_PREMIUM = false;
+    LAST_OPEN_URL = null;
+    spotifyPlayer = null;
+    spotifyDeviceId = null;
+
+    // 3. UI を更新
+    const info = document.getElementById('user-info');
+    if (info) info.textContent = '';
+    setControlsDisabled(true);
+    const a = document.getElementById('open-in-spotify');
+    const h = document.getElementById('premium-hint');
+    if (a) a.style.display = 'none';
+    if (h) h.style.display = 'none';
+
+    // 4. ホーム画面に戻る
+    changePage('home');
   } catch (e) {
-    console.warn('logout error', e);
+    console.error('ログアウトエラー', e);
+    alert('ログアウトに失敗しました。');
   }
-
-  // クライアント側リセット
-  IS_PREMIUM = false;
-  LAST_OPEN_URL = null;
-  spotifyPlayer = null;
-  spotifyDeviceId = null;
-
-  const info = document.getElementById('user-info');
-  if (info) info.textContent = '';
-
-  setControlsDisabled(true);
-  const openLink = document.getElementById('open-in-spotify');
-  const hint = document.getElementById('premium-hint');
-  if (openLink) openLink.style.display = 'none';
-  if (hint) hint.style.display = 'none';
-
-  // プレイリストや曲パネルクリア
-  const playlistGrid = document.getElementById('playlists');
-  const tracksPanel = document.getElementById('playlist-tracks');
-  if (playlistGrid) playlistGrid.innerHTML = '';
-  if (tracksPanel) tracksPanel.innerHTML = '';
-
-  // 設定ページのボタン文言更新
-  if (window.__CURRENT_PAGE__ === 'settings') {
-    const btn = document.querySelector('.spotify-btn');
-    if (btn) btn.textContent = 'Spotify 連携/更新';
-  }
-
-  alert('Spotifyからログアウトしました。');
 }
 
     let spotifyPlayer = null, spotifyDeviceId = null, IS_PREMIUM = false, LAST_OPEN_URL = null;
