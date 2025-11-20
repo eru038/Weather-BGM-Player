@@ -346,7 +346,7 @@
 
         // 给 Spotify 搜索用
         window.__WEATHER_MAIN__ = main;
-        renderWeatherPlaylist(main);
+        createWeatherPlaylistIframe(main);
 
       } catch (e) {
         console.error('[weather] error:', e);
@@ -540,33 +540,66 @@
       alert('找不到活跃的 Spotify 设备。请先在 Spotify 客户端/网页随便播放一首歌，然后再点播放。');
       return false;
     }
-    async function renderWeatherPlaylist(weatherMain) {
-      const token = await fetchAccessToken();
-      if (!token) return connectSpotify();
+    async function createWeatherPlaylistIframe(weatherMain) {
+  const token = await fetchAccessToken();
+  if (!token) return connectSpotify();
 
-      const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
-      const q = encodeURIComponent(queries[0]);
+  // 1. 天気に応じた検索キーワード
+  const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
+  const q = encodeURIComponent(queries[0]);
 
-      const res = await fetch(
-        `https://api.spotify.com/v1/search?type=track&limit=5&q=${q}`,
-        { headers: { Authorization: 'Bearer ' + token } }
-      );
-      if (!res.ok) return;
-      const data = await res.json();
+  // 2. 曲を検索
+  const res = await fetch(
+    `https://api.spotify.com/v1/search?type=track&limit=10&q=${q}`,
+    { headers: { Authorization: 'Bearer ' + token } }
+  );
+  const data = await res.json();
+  const tracks = data.tracks?.items || [];
+  const uris = tracks.map(t => t.uri);
 
-      const tracks = data.tracks?.items || [];
-      const panel = document.getElementById("weather-playlist");
-      panel.innerHTML = `
-    <h3>おすすめ曲 (${weatherMain})</h3>
-    <ul>
-      ${tracks.map(t => `
-        <li onclick="openTrackExternally('${t.external_urls.spotify}')">
-          🎵 ${t.name} - ${t.artists.map(a => a.name).join(", ")}
-        </li>
-      `).join("")}
-    </ul>
+  // 3. ユーザーID取得
+  const me = await api('/me');
+
+  // 4. プレイリスト作成
+  const plRes = await fetch(`https://api.spotify.com/v1/users/${me.id}/playlists`, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name: `${weatherMain} Playlist`,
+      description: `天気「${weatherMain}」に合わせて自動生成したプレイリスト`,
+      public: false
+    })
+  });
+  const playlist = await plRes.json();
+
+  // 5. 曲を追加
+  await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ uris })
+  });
+
+  // 6. iframe 埋め込み
+  const embedUrl = playlist.external_urls.spotify.replace(
+    "open.spotify.com/",
+    "open.spotify.com/embed/"
+  );
+  const panel = document.getElementById("weather-playlist");
+  panel.innerHTML = `
+    <h3>${weatherMain} プレイリスト</h3>
+    <iframe style="border-radius:12px" 
+            src="${embedUrl}" 
+            width="100%" height="380" frameborder="0" 
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
+            loading="lazy"></iframe>
   `;
-    }
+}
 
 
     async function playWeatherOnSpotify() {
