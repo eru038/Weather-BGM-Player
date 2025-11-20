@@ -1,37 +1,146 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Weather BGM Player</title>
   <style>
-    :root { --accent: #1db954; }
-    body {
-      margin: 0; min-height: 100vh; display: flex;
-      background: linear-gradient(180deg, var(--accent) 0%, #0e0f12 60%);
-      color: #e6eef3; font-family: "Segoe UI", sans-serif; transition: background 0.6s ease;
+    :root {
+      --accent: #1db954;
     }
-    nav { width: 200px; background: rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; align-items: start; padding: 20px; }
-    nav button { background: none; border: none; color: white; font-size: 16px; margin: 10px 0; text-align: left; cursor: pointer; width: 100%; transition: 0.3s; }
-    nav button:hover { color: var(--accent); }
-    main { flex: 1; padding: 40px; opacity: 1; transition: opacity 0.5s ease; }
-    main.fade-out { opacity: 0; }
-    h1 { font-size: 28px; color: var(--accent); }
-    .weather { margin-top: 20px; }
-    .temp { font-size: 48px; }
-    .spotify-btn { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 50px; font-size: 16px; cursor: pointer; margin-top: 20px; }
-    .color-picker { margin-top: 20px; }
-    ul { list-style: none; padding: 0; }
-    li { margin: 12px 0; cursor: pointer; transition: color 0.3s; }
-    li:hover { color: var(--accent); }
-    audio { margin-top: 20px; width: 100%; }
-    #player-bar{position:sticky;bottom:0;left:0;right:0;padding:12px;border-top:1px solid #333;display:flex;gap:12px;align-items:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);}
-    #player-bar button,#player-bar input[type=range]{cursor:pointer;}
-    #player-bar .spacer{flex:1;}
-    #premium-hint{display:none;margin-left:8px;opacity:.8;}
-    #open-in-spotify{display:none;color:#1DB954;text-decoration:underline;}
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      background: linear-gradient(180deg, var(--accent) 0%, #0e0f12 60%);
+      color: #e6eef3;
+      font-family: "Segoe UI", sans-serif;
+      transition: background 0.6s ease;
+    }
+
+    nav {
+      width: 200px;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      padding: 20px;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 16px;
+      margin: 10px 0;
+      text-align: left;
+      cursor: pointer;
+      width: 100%;
+      transition: 0.3s;
+    }
+
+    nav button:hover {
+      color: var(--accent);
+    }
+
+    main {
+      flex: 1;
+      padding: 40px;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    main.fade-out {
+      opacity: 0;
+    }
+
+    h1 {
+      font-size: 28px;
+      color: var(--accent);
+    }
+
+    .weather {
+      margin-top: 20px;
+    }
+
+    .temp {
+      font-size: 48px;
+    }
+
+    .spotify-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .color-picker {
+      margin-top: 20px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      margin: 12px 0;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    li:hover {
+      color: var(--accent);
+    }
+
+    audio {
+      margin-top: 20px;
+      width: 100%;
+    }
+
+    #player-bar {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 12px;
+      border-top: 1px solid #333;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(6px);
+    }
+
+    #player-bar button,
+    #player-bar input[type=range] {
+      cursor: pointer;
+    }
+
+    #player-bar .spacer {
+      flex: 1;
+    }
+
+    #premium-hint {
+      display: none;
+      margin-left: 8px;
+      opacity: .8;
+    }
+
+    #open-in-spotify {
+      display: none;
+      color: #1DB954;
+      text-decoration: underline;
+    }
   </style>
 </head>
+
 <body>
   <nav>
     <div id="user-info" style="color:#9fd8b7;margin-bottom:8px;"></div>
@@ -56,7 +165,8 @@
       <button id="btn-prev">⏮︎</button>
       <button id="btn-play">▶</button>
       <button id="btn-next">⏭︎</button>
-      <div id="current-track" class="muted" style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+      <div id="current-track" class="muted"
+        style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:12px;">
         <span>🔊</span>
         <input id="vol" type="range" min="0" max="100" value="50" />
@@ -73,7 +183,7 @@
     window.__CURRENT_PAGE__ = 'home'; // 记录当前页面
 
     // 根据 ?from=xxx 回到原页面（授权回调后触发）
-    (function restoreFromParam(){
+    (function restoreFromParam() {
       const from = new URLSearchParams(location.search).get('from');
       if (from) {
         changePage(from);
@@ -149,7 +259,7 @@
 
     function playLocal(url) {
       const player = document.getElementById("audio");
-      if (!player) return; player.src = url; player.play().catch(()=>{});
+      if (!player) return; player.src = url; player.play().catch(() => { });
     }
 
     function setupColorPicker() {
@@ -283,46 +393,46 @@
 
     // ===== Spotify OAuth + Playback =====
 
-    (function ensureSdk(){
+    (function ensureSdk() {
       const s = document.createElement('script'); s.src = "https://sdk.scdn.co/spotify-player.js";
       document.head.appendChild(s);
     })();
 
-    async function api(path, opts={}){
-      const res = await fetch(path, {credentials:'include', ...opts});
-      if(!res.ok) throw new Error(path+' '+res.status);
-      const ct = res.headers.get('content-type')||'';
-      if(ct.includes('application/json')) return res.json();
+    async function api(path, opts = {}) {
+      const res = await fetch(path, { credentials: 'include', ...opts });
+      if (!res.ok) throw new Error(path + ' ' + res.status);
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) return res.json();
       return res.text();
     }
 
     // 把来源页带给 /login
-    function connectSpotify(){
+    function connectSpotify() {
       const from = window.__CURRENT_PAGE__ || 'home';
       window.location.href = '/login?from=' + encodeURIComponent(from);
     }
 
     let spotifyPlayer = null, spotifyDeviceId = null, IS_PREMIUM = false, LAST_OPEN_URL = null;
 
-    async function fetchAccessToken(){ const r = await fetch('/token', {credentials:'include'}); if(!r.ok) return null; const j = await r.json(); return j.access_token; }
-    async function ensureLoggedIn(){ try{ const me = await api('/me'); IS_PREMIUM = (me.product === 'premium'); return true; }catch{ return false; } }
-    async function isPremiumUser(){ return IS_PREMIUM; }
-    function setLastOpenUrl(url){
+    async function fetchAccessToken() { const r = await fetch('/token', { credentials: 'include' }); if (!r.ok) return null; const j = await r.json(); return j.access_token; }
+    async function ensureLoggedIn() { try { const me = await api('/me'); IS_PREMIUM = (me.product === 'premium'); return true; } catch { return false; } }
+    async function isPremiumUser() { return IS_PREMIUM; }
+    function setLastOpenUrl(url) {
       LAST_OPEN_URL = url || null;
       const openLink = document.getElementById('open-in-spotify');
       const hint = document.getElementById('premium-hint');
-      if(!openLink || !hint) return;
-      if(IS_PREMIUM){ openLink.style.display = 'none'; hint.style.display = 'none'; }
-      else { if (LAST_OPEN_URL){ openLink.style.display = 'inline'; openLink.href = LAST_OPEN_URL; } else openLink.style.display = 'none'; hint.style.display = 'inline'; }
+      if (!openLink || !hint) return;
+      if (IS_PREMIUM) { openLink.style.display = 'none'; hint.style.display = 'none'; }
+      else { if (LAST_OPEN_URL) { openLink.style.display = 'inline'; openLink.href = LAST_OPEN_URL; } else openLink.style.display = 'none'; hint.style.display = 'inline'; }
     }
-    function setControlsDisabled(disabled){ ['btn-prev','btn-play','btn-next','vol'].forEach(id=>{ const el=document.getElementById(id); if (el) el.disabled = disabled; }); }
-    function bindControlEvents(){
-      const btnPrev=document.getElementById('btn-prev'); const btnPlay=document.getElementById('btn-play'); const btnNext=document.getElementById('btn-next'); const vol=document.getElementById('vol');
+    function setControlsDisabled(disabled) { ['btn-prev', 'btn-play', 'btn-next', 'vol'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = disabled; }); }
+    function bindControlEvents() {
+      const btnPrev = document.getElementById('btn-prev'); const btnPlay = document.getElementById('btn-play'); const btnNext = document.getElementById('btn-next'); const vol = document.getElementById('vol');
       let isPaused = true;
-      if (btnPrev) btnPrev.onclick = async ()=>{ if (!IS_PREMIUM || !spotifyPlayer) return; try { await spotifyPlayer.previousTrack(); } catch(e){} };
-      if (btnPlay) btnPlay.onclick = async ()=>{ if (!IS_PREMIUM || !spotifyPlayer) return; try { if (isPaused) await spotifyPlayer.resume(); else await spotifyPlayer.pause(); } catch(e){} };
-      if (btnNext) btnNext.onclick = async ()=>{ if (!IS_PREMIUM || !spotifyPlayer) return; try { await spotifyPlayer.nextTrack(); } catch(e){} };
-      if (vol) vol.oninput = async (e)=>{ if (!IS_PREMIUM || !spotifyPlayer) return; const v=Math.max(0,Math.min(1,e.target.value/100)); try { await spotifyPlayer.setVolume(v); } catch(e){} };
+      if (btnPrev) btnPrev.onclick = async () => { if (!IS_PREMIUM || !spotifyPlayer) return; try { await spotifyPlayer.previousTrack(); } catch (e) { } };
+      if (btnPlay) btnPlay.onclick = async () => { if (!IS_PREMIUM || !spotifyPlayer) return; try { if (isPaused) await spotifyPlayer.resume(); else await spotifyPlayer.pause(); } catch (e) { } };
+      if (btnNext) btnNext.onclick = async () => { if (!IS_PREMIUM || !spotifyPlayer) return; try { await spotifyPlayer.nextTrack(); } catch (e) { } };
+      if (vol) vol.oninput = async (e) => { if (!IS_PREMIUM || !spotifyPlayer) return; const v = Math.max(0, Math.min(1, e.target.value / 100)); try { await spotifyPlayer.setVolume(v); } catch (e) { } };
       if (window.Spotify && spotifyPlayer) {
         spotifyPlayer.addListener('player_state_changed', state => {
           if (!state) return; isPaused = state.paused;
@@ -331,41 +441,41 @@
         });
       }
     }
-    async function initControls(){
+    async function initControls() {
       const info = document.getElementById('user-info');
       const logged = await ensureLoggedIn();
 
-      if (!logged){
+      if (!logged) {
         if (info) info.textContent = '';
         setControlsDisabled(true);
-        const a=document.getElementById('open-in-spotify'); const h=document.getElementById('premium-hint');
-        if(a) a.style.display='none'; if(h) h.style.display='none';
+        const a = document.getElementById('open-in-spotify'); const h = document.getElementById('premium-hint');
+        if (a) a.style.display = 'none'; if (h) h.style.display = 'none';
         return;
       }
 
       // 显示用户名 & 设置页按钮文案
-      try{
+      try {
         const me = await api('/me');
         if (info) info.textContent = `🎧 ${me.display_name || me.id}`;
         if (window.__CURRENT_PAGE__ === 'settings') {
           const btn = document.querySelector('.spotify-btn');
           if (btn) btn.textContent = `Spotify 連携済み（${me.display_name || me.id}）`;
         }
-      }catch{}
+      } catch { }
 
-      if (IS_PREMIUM){
+      if (IS_PREMIUM) {
         setControlsDisabled(false);
-        const a=document.getElementById('open-in-spotify'); const h=document.getElementById('premium-hint');
-        if(a) a.style.display='none'; if(h) h.style.display='none';
-      }else{
+        const a = document.getElementById('open-in-spotify'); const h = document.getElementById('premium-hint');
+        if (a) a.style.display = 'none'; if (h) h.style.display = 'none';
+      } else {
         setControlsDisabled(true);
-        const h=document.getElementById('premium-hint'); if(h) h.style.display='inline';
-        if (LAST_OPEN_URL){ const a=document.getElementById('open-in-spotify'); if(a){ a.style.display='inline'; a.href=LAST_OPEN_URL; } }
+        const h = document.getElementById('premium-hint'); if (h) h.style.display = 'inline';
+        if (LAST_OPEN_URL) { const a = document.getElementById('open-in-spotify'); if (a) { a.style.display = 'inline'; a.href = LAST_OPEN_URL; } }
       }
     }
 
     window.onSpotifyWebPlaybackSDKReady = async () => {
-      const token = await fetchAccessToken(); if(!token) return;
+      const token = await fetchAccessToken(); if (!token) return;
       spotifyPlayer = new Spotify.Player({
         name: 'Weather BGM (Web Player)',
         getOAuthToken: async cb => { const t = await fetchAccessToken(); if (t) cb(t); },
@@ -376,7 +486,7 @@
       spotifyPlayer.addListener('account_error', ({ message }) => console.error(message));
       spotifyPlayer.addListener('playback_error', ({ message }) => console.error(message));
       spotifyPlayer.addListener('ready', ({ device_id }) => { spotifyDeviceId = device_id; });
-      spotifyPlayer.addListener('not_ready', ({ device_id }) => {});
+      spotifyPlayer.addListener('not_ready', ({ device_id }) => { });
       await spotifyPlayer.connect();
     };
 
@@ -390,29 +500,29 @@
       'Mist': ['ambient mist', 'dream pop'],
       'Fog': ['ambient fog', 'deep focus']
     };
-    
-    function getTimeBasedQuery() {
-  const hour = new Date().getHours();
-  if (hour >= 6 && hour < 12) return ['morning acoustic', 'coffee jazz'];
-  if (hour >= 12 && hour < 18) return ['afternoon chill', 'city pop'];
-  if (hour >= 18 && hour < 24) return ['evening lofi', 'night jazz'];
-  return ['midnight ambient', 'deep focus'];
-}
 
-// 既存の WEATHER_TO_QUERY と組み合わせ
-  async function pickSpotifyAndPlay(weatherMain){
-    const loggedIn = await ensureLoggedIn();
-    if(!loggedIn){ return connectSpotify(); }
-    const token = await fetchAccessToken(); if(!token) return;
-  
-    const weatherQueries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
-    const timeQueries = getTimeBasedQuery();
-    const queries = [...weatherQueries, ...timeQueries];
-  
-    const q = encodeURIComponent(queries[0]);
-    const res = await fetch('https://api.spotify.com/v1/search?type=playlist,track&limit=1&q='+q, { headers: { Authorization: 'Bearer '+token } });
-    // 以下は既存処理と同じ
-  }
+    function getTimeBasedQuery() {
+      const hour = new Date().getHours();
+      if (hour >= 6 && hour < 12) return ['morning acoustic', 'coffee jazz'];
+      if (hour >= 12 && hour < 18) return ['afternoon chill', 'city pop'];
+      if (hour >= 18 && hour < 24) return ['evening lofi', 'night jazz'];
+      return ['midnight ambient', 'deep focus'];
+    }
+
+    // 既存の WEATHER_TO_QUERY と組み合わせ
+    async function pickSpotifyAndPlay(weatherMain) {
+      const loggedIn = await ensureLoggedIn();
+      if (!loggedIn) { return connectSpotify(); }
+      const token = await fetchAccessToken(); if (!token) return;
+
+      const weatherQueries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
+      const timeQueries = getTimeBasedQuery();
+      const queries = [...weatherQueries, ...timeQueries];
+
+      const q = encodeURIComponent(queries[0]);
+      const res = await fetch('https://api.spotify.com/v1/search?type=playlist,track&limit=1&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
+      // 以下は既存処理と同じ
+    }
 
 
     async function waitForDeviceReady(timeoutMs = 8000) {
@@ -423,30 +533,30 @@
     async function ensureActiveDevice() {
       const hasDevice = await waitForDeviceReady();
       if (hasDevice) {
-        await fetch('/transfer', { method:'PUT', credentials:'include', headers:{'content-type':'application/json'}, body: JSON.stringify({device_id: spotifyDeviceId}) });
+        await fetch('/transfer', { method: 'PUT', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ device_id: spotifyDeviceId }) });
         return true;
       }
-      try { const list = await api('/devices'); const active = list.devices?.find(d => d.is_active); if (active) return true; }catch{}
+      try { const list = await api('/devices'); const active = list.devices?.find(d => d.is_active); if (active) return true; } catch { }
       alert('找不到活跃的 Spotify 设备。请先在 Spotify 客户端/网页随便播放一首歌，然后再点播放。');
       return false;
     }
     async function renderWeatherPlaylist(weatherMain) {
-  const token = await fetchAccessToken();
-  if (!token) return connectSpotify();
+      const token = await fetchAccessToken();
+      if (!token) return connectSpotify();
 
-  const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
-  const q = encodeURIComponent(queries[0]);
+      const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
+      const q = encodeURIComponent(queries[0]);
 
-  const res = await fetch(
-    `https://api.spotify.com/v1/search?type=track&limit=5&q=${q}`,
-    { headers: { Authorization: 'Bearer ' + token } }
-  );
-  if (!res.ok) return;
-  const data = await res.json();
+      const res = await fetch(
+        `https://api.spotify.com/v1/search?type=track&limit=5&q=${q}`,
+        { headers: { Authorization: 'Bearer ' + token } }
+      );
+      if (!res.ok) return;
+      const data = await res.json();
 
-  const tracks = data.tracks?.items || [];
-  const panel = document.getElementById("weather-playlist");
-  panel.innerHTML = `
+      const tracks = data.tracks?.items || [];
+      const panel = document.getElementById("weather-playlist");
+      panel.innerHTML = `
     <h3>おすすめ曲 (${weatherMain})</h3>
     <ul>
       ${tracks.map(t => `
@@ -456,22 +566,22 @@
       `).join("")}
     </ul>
   `;
-}
+    }
 
 
-    async function playWeatherOnSpotify(){
+    async function playWeatherOnSpotify() {
       const main = window.__WEATHER_MAIN__ || 'Clouds'; await pickSpotifyAndPlay(main);
     }
 
-    async function pickSpotifyAndPlay(weatherMain){
+    async function pickSpotifyAndPlay(weatherMain) {
       const loggedIn = await ensureLoggedIn();
-      if(!loggedIn){ return connectSpotify(); }
-      const token = await fetchAccessToken(); if(!token) return;
+      if (!loggedIn) { return connectSpotify(); }
+      const token = await fetchAccessToken(); if (!token) return;
 
       const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
       const q = encodeURIComponent(queries[0]);
-      const res = await fetch('https://api.spotify.com/v1/search?type=playlist,track&limit=1&q='+q, { headers: { Authorization: 'Bearer '+token } });
-      if(!res.ok) return;
+      const res = await fetch('https://api.spotify.com/v1/search?type=playlist,track&limit=1&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
+      if (!res.ok) return;
       const data = await res.json();
 
       let contextUri = null, trackUri = null, openUrl = null;
@@ -485,7 +595,7 @@
       if (!(await ensureActiveDevice())) { if (openUrl) location.href = openUrl; return; }
 
       const body = contextUri ? { context_uri: contextUri } : { uris: [trackUri] };
-      const playRes = await fetch('/play', { method:'PUT', credentials:'include', headers:{'content-type':'application/json'}, body: JSON.stringify(body) });
+      const playRes = await fetch('/play', { method: 'PUT', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
       if (!playRes.ok) { if (openUrl) location.href = openUrl; }
     }
 
@@ -495,12 +605,14 @@
         if (!navigator.geolocation) return reject(new Error('geolocation_unsupported'));
         const tid = setTimeout(() => reject(new Error('geolocation_timeout')), 6000);
         navigator.geolocation.getCurrentPosition(
-          pos => { clearTimeout(tid); resolve({
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude,
-            city: null,  // 浏览器定位通常没城市名
-            source: 'browser'
-          }); },
+          pos => {
+            clearTimeout(tid); resolve({
+              lat: pos.coords.latitude,
+              lon: pos.coords.longitude,
+              city: null,  // 浏览器定位通常没城市名
+              source: 'browser'
+            });
+          },
           err => { clearTimeout(tid); reject(err); },
           { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
         );
@@ -534,7 +646,7 @@
     }
 
     // 拉取并渲染用户歌单
-    async function renderUserPlaylists(){
+    async function renderUserPlaylists() {
       const grid = document.getElementById('playlists');
       const tracksPanel = document.getElementById('playlist-tracks');
       if (!grid) return;
@@ -610,7 +722,7 @@
     }
 
     // Premium → 网页内直接播放；非会员 → 跳到 Spotify
-    async function playSpotifyPlaylist(playlist){
+    async function playSpotifyPlaylist(playlist) {
       setLastOpenUrl(playlist.external_url || null);
 
       const logged = await ensureLoggedIn();
@@ -630,12 +742,12 @@
 
       try {
         const res = await fetch('/play', {
-          method:'PUT',
-          credentials:'include',
-          headers:{'content-type':'application/json'},
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ context_uri: playlist.uri })
         });
-        if(!res.ok && playlist.external_url){
+        if (!res.ok && playlist.external_url) {
           location.href = playlist.external_url;
         }
       } catch (e) {
@@ -645,10 +757,10 @@
     }
 
     // 展开显示歌单曲目（只取前 100 首）
-    async function renderTracksForPlaylist(playlistId, cardEl, panelEl){
+    async function renderTracksForPlaylist(playlistId, cardEl, panelEl) {
       if (!panelEl) return;
       panelEl.innerHTML = `<div style="opacity:.8;">曲目読み込み中...</div>`;
-      try{
+      try {
         const data = await api(`/playlist/${encodeURIComponent(playlistId)}/tracks?limit=100`);
         const items = data.items || [];
         if (!items.length) {
@@ -658,73 +770,74 @@
         panelEl.innerHTML = `
           <h3 style="margin-top:12px;">曲目（前 ${items.length} 首）</h3>
           <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px;">
-            ${items.map((t,i)=>`
+            ${items.map((t, i) => `
               <div style="display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.25);border:1px solid #222;border-radius:10px;padding:8px;">
-                <div style="width:40px;text-align:right;opacity:.7;">${i+1}</div>
+                <div style="width:40px;text-align:right;opacity:.7;">${i + 1}</div>
                 ${t.image ? `<img src="${t.image}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<div style="width:40px;height:40px;background:#222;border-radius:6px;"></div>`}
                 <div style="flex:1;min-width:0;">
                   <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(t.name)}</div>
-                  <div style="opacity:.8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml((t.artists||[]).join(', '))}</div>
+                  <div style="opacity:.8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml((t.artists || []).join(', '))}</div>
                 </div>
                 <button onclick="openTrackExternally('${t.external_url || ''}')" style="border:1px solid #333;background:transparent;color:#e6eef3;border-radius:8px;padding:6px 10px;cursor:pointer;">打开</button>
               </div>
             `).join('')}
           </div>
         `;
-      }catch(e){
+      } catch (e) {
         console.error('renderTracksForPlaylist error', e);
         panelEl.innerHTML = `<div style="opacity:.8;">曲目の取得に失敗しました。</div>`;
       }
     }
 
-    function openTrackExternally(url){
+    function openTrackExternally(url) {
       if (!url) return;
       window.open(url, '_blank');
     }
 
-    function escapeHtml(s){
-      return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    function escapeHtml(s) {
+      return (s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     }
     async function logoutSpotify() {
-  try {
-    await fetch('/logout', { method: 'POST', credentials: 'include' });
-    localStorage.removeItem('spotify_access_token');
-    localStorage.removeItem('spotify_refresh_token');
+      try {
+        await fetch('/logout', { method: 'POST', credentials: 'include' });
+        localStorage.removeItem('spotify_access_token');
+        localStorage.removeItem('spotify_refresh_token');
 
-    const logoutUrl = 'https://accounts.spotify.com/logout?continue=' 
-                      + encodeURIComponent(window.location.origin + '/login.html');
-    window.location.href = logoutUrl;
-  } catch (err) {
-    console.error('ログアウト失敗:', err);
-  }
-}
+        const logoutUrl = 'https://accounts.spotify.com/logout?continue='
+          + encodeURIComponent(window.location.origin + '/login.html');
+        window.location.href = logoutUrl;
+      } catch (err) {
+        console.error('ログアウト失敗:', err);
+      }
+    }
 
     async function updateNavLoginButton() {
-  const loginBtn = document.getElementById('login-btn');
-  try {
-    // サーバーにアクセスしてログイントークンがあるか確認
-    const res = await fetch('/token', { credentials: 'include' });
-    if (res.ok) {
-      loginBtn.textContent = 'Spotify ログアウト';
-      loginBtn.style.background = '#e53935';
-      loginBtn.onclick = logoutSpotify;
-    } else {
-      loginBtn.textContent = 'Spotify ログイン';
-      loginBtn.style.background = '#1db954';
-      loginBtn.onclick = () => { window.location.href = '/login'; };
+      const loginBtn = document.getElementById('login-btn');
+      try {
+        // サーバーにアクセスしてログイントークンがあるか確認
+        const res = await fetch('/token', { credentials: 'include' });
+        if (res.ok) {
+          loginBtn.textContent = 'Spotify ログアウト';
+          loginBtn.style.background = '#e53935';
+          loginBtn.onclick = logoutSpotify;
+        } else {
+          loginBtn.textContent = 'Spotify ログイン';
+          loginBtn.style.background = '#1db954';
+          loginBtn.onclick = () => { window.location.href = '/login'; };
+        }
+      } catch (err) {
+        console.error(err);
+        loginBtn.textContent = 'Spotify ログイン';
+        loginBtn.style.background = '#1db954';
+        loginBtn.onclick = () => { window.location.href = '/login'; };
+      }
     }
-  } catch (err) {
-    console.error(err);
-    loginBtn.textContent = 'Spotify ログイン';
-    loginBtn.style.background = '#1db954';
-    loginBtn.onclick = () => { window.location.href = '/login'; };
-  }
-}
 
-// ページ読み込み時に更新
-updateNavLoginButton();
+    // ページ読み込み時に更新
+    updateNavLoginButton();
 
 
   </script>
 </body>
+
 </html>
