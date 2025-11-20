@@ -346,7 +346,7 @@
 
         // 给 Spotify 搜索用
         window.__WEATHER_MAIN__ = main;
-        createWeatherPlaylistIframe(main);
+        window.addEventListener("DOMContentLoaded", () => { loadWeather(main); // await不要 });
 
       } catch (e) {
         console.error('[weather] error:', e);
