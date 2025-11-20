@@ -63,10 +63,16 @@ app.get('/ping', (req,res) => res.json({ ok: true }));
 app.get('/login', (req,res)=>{
   const from = req.query.from || 'home';
   const scope = [
-    'user-read-email','user-read-private','streaming',
-    'user-modify-playback-state','user-read-playback-state',
-    'playlist-read-private'
+  'user-read-email',
+  'user-read-private',
+  'streaming',
+  'user-modify-playback-state',
+  'user-read-playback-state',
+  'playlist-read-private',
+  'playlist-modify-private',
+  'playlist-modify-public'
   ].join(' ');
+
 
   const params = new URLSearchParams({
     response_type: 'code',
