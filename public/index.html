@@ -236,6 +236,7 @@
 
         // 给 Spotify 搜索用
         window.__WEATHER_MAIN__ = main;
+        renderWeatherPlaylist(main);
 
       } catch (e) {
         console.error('[weather] error:', e);
@@ -389,6 +390,7 @@
       'Mist': ['ambient mist', 'dream pop'],
       'Fog': ['ambient fog', 'deep focus']
     };
+    
     function getTimeBasedQuery() {
   const hour = new Date().getHours();
   if (hour >= 6 && hour < 12) return ['morning acoustic', 'coffee jazz'];
@@ -428,6 +430,34 @@
       alert('找不到活跃的 Spotify 设备。请先在 Spotify 客户端/网页随便播放一首歌，然后再点播放。');
       return false;
     }
+    async function renderWeatherPlaylist(weatherMain) {
+  const token = await fetchAccessToken();
+  if (!token) return connectSpotify();
+
+  const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
+  const q = encodeURIComponent(queries[0]);
+
+  const res = await fetch(
+    `https://api.spotify.com/v1/search?type=track&limit=5&q=${q}`,
+    { headers: { Authorization: 'Bearer ' + token } }
+  );
+  if (!res.ok) return;
+  const data = await res.json();
+
+  const tracks = data.tracks?.items || [];
+  const panel = document.getElementById("weather-playlist");
+  panel.innerHTML = `
+    <h3>おすすめ曲 (${weatherMain})</h3>
+    <ul>
+      ${tracks.map(t => `
+        <li onclick="openTrackExternally('${t.external_urls.spotify}')">
+          🎵 ${t.name} - ${t.artists.map(a => a.name).join(", ")}
+        </li>
+      `).join("")}
+    </ul>
+  `;
+}
+
 
     async function playWeatherOnSpotify(){
       const main = window.__WEATHER_MAIN__ || 'Clouds'; await pickSpotifyAndPlay(main);
