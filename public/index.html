@@ -408,6 +408,14 @@
 
     // 把来源页带给 /login
     function connectSpotify() {
+      const scopes = [
+        'playlist-modify-private',
+        'playlist-modify-public',
+        'user-read-email',
+        'user-read-private'
+      ].join(' ');
+      
+      const authUrl = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${REDIRECT_URI}&scope=${encodeURIComponent(scopes)}`;
       const from = window.__CURRENT_PAGE__ || 'home';
       window.location.href = '/login?from=' + encodeURIComponent(from);
     }
