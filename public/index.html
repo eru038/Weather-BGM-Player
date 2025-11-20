@@ -203,6 +203,7 @@
               <button class="spotify-btn" onclick="playWeatherOnSpotify()">在 Spotify 播放 天気BGM</button>
             </div>
             <audio id="audio" controls></audio>
+            <div id="weather-playlist" style="margin-top:24px;"></div>
             <div id="player-bar">
               <button id="btn-prev">⏮︎</button>
               <button id="btn-play">▶</button>
@@ -347,7 +348,6 @@
         // 给 Spotify 搜索用
         window.__WEATHER_MAIN__ = main;
         createWeatherPlaylistIframe(main);
-        // window.addEventListener("DOMContentLoaded", () => { loadWeather(main); // await不要 });
 
       } catch (e) {
         console.error('[weather] error:', e);
@@ -549,33 +549,45 @@
       alert('找不到活跃的 Spotify 设备。请先在 Spotify 客户端/网页随便播放一首歌，然后再点播放。');
       return false;
     }
-    async function createWeatherPlaylistIframe(weatherMain) {
+    
+    async function createWeatherPlaylistIframe(weatherMain, uris) {
   const token = await fetchAccessToken();
   if (!token) return connectSpotify();
 
-  const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
-  const q = encodeURIComponent(queries[0]);
+  const meRes = await fetch("https://api.spotify.com/v1/me", {
+    headers: { Authorization: "Bearer " + token }
+  });
+  const me = await meRes.json();
 
-  const res = await fetch(
-    `https://api.spotify.com/v1/search?type=playlist&limit=1&q=${q}`,
-    { headers: { Authorization: 'Bearer ' + token } }
-  );
-  const data = await res.json();
-  const playlist = data.playlists?.items?.[0];
-  if (!playlist || !playlist.external_urls?.spotify) {
-    console.warn("プレイリスト検索に失敗しました:", data);
-    return;
-  }
+  // プレイリスト作成
+  const createRes = await fetch(`https://api.spotify.com/v1/users/${me.id}/playlists`, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name: `${weatherMain} Playlist`,
+      description: `天気「${weatherMain}」に合わせて自動生成されたプレイリスト`,
+      public: false // ← 非公開設定（保存はされる）
+    })
+  });
+  const playlist = await createRes.json();
 
-  const embedUrl = playlist.external_urls.spotify.replace(
-    "open.spotify.com/",
-    "open.spotify.com/embed/"
-  );
+  // トラック追加
+  await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ uris })
+  });
+
+  // iframe表示
+  const embedUrl = playlist.external_urls.spotify.replace("open.spotify.com/", "open.spotify.com/embed/");
   const panel = document.getElementById("weather-playlist");
-  if (!panel) {
-    console.warn("weather-playlist 要素が見つかりません");
-    return;
-  }
+  if (!panel) return;
 
   panel.innerHTML = `
     <h3>${weatherMain} プレイリスト</h3>
@@ -585,47 +597,8 @@
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
             loading="lazy"></iframe>
   `;
-
-  console.log("天気:", weatherMain);
-  console.log("埋め込みURL:", embedUrl);
 }
 
-    
-      const playlist = await plRes.json();
-    
-      // 🔒 playlist が undefined の場合は中断
-      if (!playlist || !playlist.id || !playlist.external_urls?.spotify) {
-        console.warn("プレイリスト作成に失敗しました:", playlist);
-        return;
-      }
-    
-      await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer ' + token,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ uris })
-      });
-    
-      const embedUrl = playlist.external_urls.spotify.replace(
-        "open.spotify.com/",
-        "open.spotify.com/embed/"
-      );
-      const panel = document.getElementById("weather-playlist");
-      panel.innerHTML = `
-        <h3>${weatherMain} プレイリスト</h3>
-        <iframe style="border-radius:12px" 
-                src="${embedUrl}" 
-                width="100%" height="380" frameborder="0" 
-                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-                loading="lazy"></iframe>
-      `;
-    
-      console.log("天気:", weatherMain);
-      console.log("プレイリストURL:", playlist.external_urls.spotify);
-      console.log("埋め込みURL:", embedUrl);
-    }
 
 
 
@@ -895,9 +868,6 @@
 
     // ページ読み込み時に更新
     updateNavLoginButton();
-    window.addEventListener("DOMContentLoaded", () => {
-      loadWeather(); // await不要
-    });
 
 
   </script>
