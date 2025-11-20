@@ -386,6 +386,29 @@
       'Mist': ['ambient mist', 'dream pop'],
       'Fog': ['ambient fog', 'deep focus']
     };
+    function getTimeBasedQuery() {
+  const hour = new Date().getHours();
+  if (hour >= 6 && hour < 12) return ['morning acoustic', 'coffee jazz'];
+  if (hour >= 12 && hour < 18) return ['afternoon chill', 'city pop'];
+  if (hour >= 18 && hour < 24) return ['evening lofi', 'night jazz'];
+  return ['midnight ambient', 'deep focus'];
+}
+
+// 既存の WEATHER_TO_QUERY と組み合わせ
+  async function pickSpotifyAndPlay(weatherMain){
+    const loggedIn = await ensureLoggedIn();
+    if(!loggedIn){ return connectSpotify(); }
+    const token = await fetchAccessToken(); if(!token) return;
+  
+    const weatherQueries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
+    const timeQueries = getTimeBasedQuery();
+    const queries = [...weatherQueries, ...timeQueries];
+  
+    const q = encodeURIComponent(queries[0]);
+    const res = await fetch('https://api.spotify.com/v1/search?type=playlist,track&limit=1&q='+q, { headers: { Authorization: 'Bearer '+token } });
+    // 以下は既存処理と同じ
+  }
+
 
     async function waitForDeviceReady(timeoutMs = 8000) {
       const start = Date.now();
