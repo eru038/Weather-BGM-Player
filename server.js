@@ -1,4 +1,7 @@
+// --- 環境変数読み込み
 require('dotenv').config();
+
+// --- 必要モジュール
 const express = require('express');
 const axios = require('axios');
 const cookieParser = require('cookie-parser');
@@ -6,19 +9,59 @@ const cors = require('cors');
 const path = require('path');
 const qs = require('querystring');
 
+// --- pg を追加（重要）
+const { Pool } = require('pg');
+// Postgres を使うために必要
+
+
+// --- サーバー設定
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// --- Spotify 関係の環境変数
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || `http://127.0.0.1:${PORT}/callback`;
-const FRONTEND_URI = process.env.FRONTEND_URI || (() => {
-  try { const u = new URL(REDIRECT_URI); return `${u.protocol}//${u.hostname}:${u.port}`; }
-  catch (_) { return `http://127.0.0.1:${PORT}`; }
-})();
+const REDIRECT_URI =
+  process.env.SPOTIFY_REDIRECT_URI || `http://127.0.0.1:${PORT}/callback`;
+
+// --- FRONTEND_URI 自動判定
+const FRONTEND_URI =
+  process.env.FRONTEND_URI ||
+  (() => {
+    try {
+      const u = new URL(REDIRECT_URI);
+      return `${u.protocol}//${u.hostname}:${u.port}`;
+    } catch (_) {
+      return `http://127.0.0.1:${PORT}`;
+    }
+  })();
+
+// --- PostgreSQL 接続設定（Render 用）
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
+// Render の PostgreSQL では SSL が必須
+
+
+// --- ここからルートを書く（まだ未記入）
+// 例： /test-db で動作チェックできるように
+app.get('/test-db', async (req, res) => {
+  try {
+    const r = await pool.query("SELECT NOW()");
+    // 現在時刻を取得
+    res.json(r.rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+// --- サーバー起動
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
 
 /* -------------------- Middlewares -------------------- */
 app.use(cookieParser());
