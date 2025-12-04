@@ -282,6 +282,17 @@
 
     async function loadWeather() {
       const area = document.getElementById('weather-area');
+        // 解析
+      const temp = Math.round(wData?.main?.temp ?? NaN);
+      const weather = wData?.weather?.[0]?.description || '—';
+      const main = wData?.weather?.[0]?.main || 'Clouds';
+      
+      // city は IPが返す市区町村を優先、なければ OWM の name
+      const city = loc.city || wData?.name || '—';
+      
+      // 都道府県（region）があれば括弧で補助表示
+      const regionSuffix = loc.region ? `（${loc.region}）` : '';
+
       if (!area) return;
 
       try {
@@ -349,6 +360,16 @@
         // 给 Spotify 搜索用
         window.__WEATHER_MAIN__ = main;
         createWeatherPlaylistIframe(main);
+        area.innerHTML = `
+          <div class="weather">
+            <h3>${city}${regionSuffix} の天気</h3>
+            <p>${icon} ${weather}</p>
+            <div class="temp">${tempHtml}</div>
+            <div style="margin-top:6px;opacity:.7;font-size:14px;">
+              データ元: ${loc.source === 'browser' ? 'ブラウザ位置情報' : loc.source === 'ipapi' ? 'IP位置情報' : 'デフォルト'}
+            </div>
+          </div>
+        `;
 
       } catch (e) {
         console.error('[weather] error:', e);
@@ -625,23 +646,68 @@
     }
 
     async function getLocationWithFallback() {
-      // 1) 先试浏览器定位（加 6 秒超时）
-      const geoByBrowser = new Promise((resolve, reject) => {
-        if (!navigator.geolocation) return reject(new Error('geolocation_unsupported'));
-        const tid = setTimeout(() => reject(new Error('geolocation_timeout')), 6000);
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            clearTimeout(tid); resolve({
-              lat: pos.coords.latitude,
-              lon: pos.coords.longitude,
-              city: null,  // 浏览器定位通常没城市名
-              source: 'browser'
-            });
-          },
-          err => { clearTimeout(tid); reject(err); },
-          { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
-        );
-      });
+  // タイムアウト付きでブラウザ位置情報を試す
+  const getBrowserLocation = () =>
+    new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('geolocation timeout')), 8000);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          clearTimeout(timer);
+          resolve({
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            city: null, // 住所は逆ジオコーディングで別途取得する場合に使う
+            region: null,
+            source: 'browser',
+          });
+        },
+        (err) => {
+          clearTimeout(timer);
+          reject(err);
+        },
+        { enableHighAccuracy: true, timeout: 7000, maximumAge: 30000 }
+      );
+    });
+
+  // IPベースのフォールバック（ipapi）
+  const getIpLocation = async () => {
+    const res = await fetch('https://ipapi.co/json/');
+    if (!res.ok) throw new Error('ipapi failed');
+    const data = await res.json();
+    return {
+      lat: Number(data.latitude),
+      lon: Number(data.longitude),
+      city: data.city || null,        // 市区町村
+      region: data.region || null,    // 都道府県
+      country: data.country_name || null,
+      source: 'ipapi',
+    };
+  };
+
+  // 最終フォールバック（固定値：東京都心）
+  const getDefaultLocation = () => ({
+    lat: 35.6895,
+    lon: 139.6917,
+    city: '東京都',
+    region: '東京都',
+    country: '日本',
+    source: 'default',
+  });
+
+  try {
+    // 1. ブラウザ位置情報
+    return await getBrowserLocation();
+  } catch {
+    try {
+      // 2. IP位置情報
+      return await getIpLocation();
+    } catch {
+      // 3. デフォルト
+      return getDefaultLocation();
+    }
+  }
+}
+
 
       try {
         const r = await geoByBrowser;
