@@ -280,111 +280,159 @@
       });
     }
 
-    async function loadWeather() {
-      const area = document.getElementById('weather-area');
-        // 解析
-      const temp = Math.round(wData?.main?.temp ?? NaN);
-      const weather = wData?.weather?.[0]?.description || '—';
-      const main = wData?.weather?.[0]?.main || 'Clouds';
-      
-      // city は IPが返す市区町村を優先、なければ OWM の name
-      const city = loc.city || wData?.name || '—';
-      
-      // 都道府県（region）があれば括弧で補助表示
-      const regionSuffix = loc.region ? `（${loc.region}）` : '';
+    c.source === 'browser' ? 'ブラウザ位置情報' : loc.source === 'ipapi' ? 'IP位置情報' : 'デフォルト'}
+            </div>async function loadWeather() {
+  const area = document.getElementById('weather-area');
+  if (!area) return;
 
-      if (!area) return;
+  try {
+    // 位置情報（ブラウザ→IP→デフォルト）
+    const loc = await getLocationWithFallback();
+    const lat = loc.lat;
+    const lon = loc.lon;
 
-      try {
-        // 定位（带回退）
-        const loc = await getLocationWithFallback();
-        const lat = loc.lat;
-        const lon = loc.lon;
-        const cityFromGeo = loc.city;
+    // OpenWeatherMap 取得
+    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&units=metric&lang=ja&appid=${encodeURIComponent(OWM_API_KEY)}`;
+    const wRes = await fetch(url);
 
-        // 请求 OWM（增加错误处理）
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&units=metric&lang=ja&appid=${encodeURIComponent(OWM_API_KEY)}`;
-        const wRes = await fetch(url);
-
-        if (!wRes.ok) {
-          const txt = await wRes.text().catch(() => '');
-          console.error('[weather] OWM not ok', wRes.status, txt);
-          if (wRes.status === 401) {
-            area.innerHTML = `<p>OpenWeatherMapのAPIキーが無効です（401）。キーを確認してください。</p>`;
-          } else if (wRes.status === 429) {
-            area.innerHTML = `<p>リクエストが多すぎます（429）。少し待ってから再試行してください。</p>`;
-          } else {
-            area.innerHTML = `<p>天気情報の取得に失敗しました（${wRes.status}）。</p>`;
-          }
-          return;
-        }
-
-        const wData = await wRes.json();
-
-        // 解析
-        const temp = Math.round(wData?.main?.temp ?? NaN);
-        const weather = wData?.weather?.[0]?.description || '—';
-        const main = wData?.weather?.[0]?.main || 'Clouds';
-        const city = cityFromGeo || wData?.name || '—';
-
-        // 选择主题色/图标
-        let icon = "🌈"; let accent = "#1db954";
-        switch (main) {
-          case "Clear": icon = "☀️"; accent = "#f7b733"; break;
-          case "Clouds": icon = "☁️"; accent = "#5f9ea0"; break;
-          case "Rain": icon = "🌧️"; accent = "#4a90e2"; break;
-          case "Drizzle": icon = "🌦️"; accent = "#6ec6ff"; break;
-          case "Thunderstorm": icon = "⛈️"; accent = "#3b3b98"; break;
-          case "Snow": icon = "❄️"; accent = "#00bcd4"; break;
-          case "Mist":
-          case "Fog": icon = "🌫️"; accent = "#aab2bd"; break;
-        }
-
-        // 用户自定义颜色优先
-        const savedAccent = localStorage.getItem('accentColor');
-        const finalAccent = savedAccent || accent;
-        document.documentElement.style.setProperty('--accent', finalAccent);
-        document.body.style.background = `linear-gradient(180deg, ${finalAccent} 0%, #0e0f12 60%)`;
-
-        // 渲染
-        const tempHtml = isNaN(temp) ? '—' : `${temp}°C`;
-        area.innerHTML = `
-          <div class="weather">
-            <h3>${city} の天気</h3>
-            <p>${icon} ${weather}</p>
-            <div class="temp">${tempHtml}</div>
-            <div style="margin-top:6px;opacity:.7;font-size:14px;">データ元: ${loc.source === 'browser' ? 'ブラウザ位置情報' : loc.source === 'ipapi' ? 'IP位置情報' : 'デフォルト'}</div>
-          </div>
-        `;
-
-        // 给 Spotify 搜索用
-        window.__WEATHER_MAIN__ = main;
-        createWeatherPlaylistIframe(main);
-        area.innerHTML = `
-          <div class="weather">
-            <h3>${city}${regionSuffix} の天気</h3>
-            <p>${icon} ${weather}</p>
-            <div class="temp">${tempHtml}</div>
-            <div style="margin-top:6px;opacity:.7;font-size:14px;">
-              データ元: ${loc.source === 'browser' ? 'ブラウザ位置情報' : loc.source === 'ipapi' ? 'IP位置情報' : 'デフォルト'}
-            </div>
-          </div>
-        `;
-
-      } catch (e) {
-        console.error('[weather] error:', e);
-        if (area) area.innerHTML = `<p>天気情報の取得に失敗しました。</p>`;
+    if (!wRes.ok) {
+      const txt = await wRes.text().catch(() => '');
+      console.error('[weather] OWM not ok', wRes.status, txt);
+      if (wRes.status === 401) {
+        area.innerHTML = `<p>OpenWeatherMapのAPIキーが無効です（401）。キーを確認してください。</p>`;
+      } else if (wRes.status === 429) {
+        area.innerHTML = `<p>リクエストが多すぎます（429）。少し待ってから再試行してください。</p>`;
+      } else {
+        area.innerHTML = `<p>天気情報の取得に失敗しました（${wRes.status}）。</p>`;
       }
+      return;
     }
 
-    window.onload = () => {
-      const savedAccent = localStorage.getItem('accentColor');
-      if (savedAccent) {
-        document.documentElement.style.setProperty('--accent', savedAccent);
-        document.body.style.background = `linear-gradient(180deg, ${savedAccent} 0%, #0e0f12 60%)`;
-      }
-      loadWeather(); loadBattery(); bindControlEvents(); initControls();
+    const wData = await wRes.json();
+
+    // 解析
+    const temp = Math.round(wData?.main?.temp ?? NaN);
+    const weather = wData?.weather?.[0]?.description || '—';
+    const main = wData?.weather?.[0]?.main || 'Clouds';
+
+    // 市区町村は loc.city を優先。なければ OWM の name
+    const city = loc.city || wData?.name || '—';
+    const regionSuffix = loc.region ? `（${loc.region}）` : '';
+
+    // テーマ色/アイコン
+    let icon = '🌈', accent = '#1db954';
+    switch (main) {
+      case 'Clear': icon = '☀️'; accent = '#f7b733'; break;
+      case 'Clouds': icon = '☁️'; accent = '#5f9ea0'; break;
+      case 'Rain': icon = '🌧️'; accent = '#4a90e2'; break;
+      case 'Drizzle': icon = '🌦️'; accent = '#6ec6ff'; break;
+      case 'Thunderstorm': icon = '⛈️'; accent = '#3b3b98'; break;
+      case 'Snow': icon = '❄️'; accent = '#00bcd4'; break;
+      case 'Mist':
+      case 'Fog': icon = '🌫️'; accent = '#aab2bd'; break;
+    }
+
+    // ユーザー保存の色を優先
+    const savedAccent = localStorage.getItem('accentColor');
+    const finalAccent = savedAccent || accent;
+    document.documentElement.style.setProperty('--accent', finalAccent);
+    document.body.style.background = `linear-gradient(180deg, ${finalAccent} 0%, #0e0f12 60%)`;
+
+    // レンダリング（1回だけ）
+    const tempHtml = isNaN(temp) ? '—' : `${temp}°C`;
+    area.innerHTML = `
+      <div class="weather">
+        <h3>${city}${regionSuffix} の天気</h3>
+        <p>${icon} ${weather}</p>
+        <div class="temp">${tempHtml}</div>
+        <div style="margin-top:6px;opacity:.7;font-size:14px;">
+          データ元: ${loc.source === 'browser' ? 'ブラウザ位置情報' : loc.source === 'ipapi' ? 'IP位置情報' : 'デフォルト'}
+        </div>
+      </div>
+    `;
+
+    // Spotify 用
+    window.__WEATHER_MAIN__ = main;
+    createWeatherPlaylistIframe(main);
+
+  } catch (e) {
+    console.error('[weather] error:', e);
+    if (area) area.innerHTML = `<p>天気情報の取得に失敗しました。</p>`;
+  }
+}
+
+window.onload = () => {
+  const savedAccent = localStorage.getItem('accentColor');
+  if (savedAccent) {
+    document.documentElement.style.setProperty('--accent', savedAccent);
+    document.body.style.background = `linear-gradient(180deg, ${savedAccent} 0%, #0e0f12 60%)`;
+  }
+  loadWeather();
+  loadBattery();
+  bindControlEvents();
+  initControls();
+};
+
+// 位置情報フォールバック
+async function getLocationWithFallback() {
+  // ブラウザ位置情報（タイムアウト付き）
+  const getBrowserLocation = () =>
+    new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('geolocation timeout')), 8000);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          clearTimeout(timer);
+          resolve({
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            city: null,   // 必要なら逆ジオで補完
+            region: null,
+            source: 'browser',
+          });
+        },
+        (err) => {
+          clearTimeout(timer);
+          reject(err);
+        },
+        { enableHighAccuracy: true, timeout: 7000, maximumAge: 30000 }
+      );
+    });
+
+  // IP（ipapi）
+  const getIpLocation = async () => {
+    const res = await fetch('https://ipapi.co/json/');
+    if (!res.ok) throw new Error('ipapi failed');
+    const data = await res.json();
+    return {
+      lat: Number(data.latitude),
+      lon: Number(data.longitude),
+      city: data.city || null,       // 市区町村
+      region: data.region || null,   // 都道府県
+      country: data.country_name || null,
+      source: 'ipapi',
     };
+  };
+
+  // デフォルト（東京）
+  const getDefaultLocation = () => ({
+    lat: 35.6895,
+    lon: 139.6917,
+    city: '東京都',
+    region: '東京都',
+    country: '日本',
+    source: 'default',
+  });
+
+  try {
+    return await getBrowserLocation();
+  } catch {
+    try {
+      return await getIpLocation();
+    } catch {
+      return getDefaultLocation();
+    }
+  }
+}
 
     async function loadBattery() {
       try {
