@@ -284,7 +284,3 @@ app.post('/logout', (req, res) => {
   res.clearCookie('refresh_token');
   res.json({ ok: true });
 });
-/* -------------------- Boot -------------------- */
-app.listen(PORT, ()=>{
-  console.log('Server on ' + (FRONTEND_URI || `http://127.0.0.1:${PORT}`));
-});
