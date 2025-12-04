@@ -692,34 +692,29 @@ async function getLocationWithFallback() {
       if (!playRes.ok) { if (openUrl) location.href = openUrl; }
     }
 
-    async function getLocationWithFallback() {
-  try {
-    const r = await geoByBrowser;  // ← async 関数内なのでOK
-    return r;
-  } catch (e) {
-    console.warn('[geo] browser failed:', e.message || e);
-  }
-
-  // IPベースのフォールバック
-  try {
-    const resp = await fetch('https://ipapi.co/json/');
-    if (resp.ok) {
-      const j = await resp.json();
-      if (j && j.latitude && j.longitude) {
-        return { lat: j.latitude, lon: j.longitude, city: j.city || null, source: 'ipapi' };
-      }
-    } else {
-      console.warn('[geo] ipapi status:', resp.status);
-    }
-  } catch (e) {
-    console.warn('[geo] ipapi error:', e);
-  }
-
-  // 最後のフォールバック（東京）
-  console.warn('[geo] fallback to default: Tokyo');
-  return { lat: 35.681236, lon: 139.767125, city: '東京(デフォルト)', source: 'default' };
-}
-
+async function getLocationWithFallback() {
+  // ブラウザ位置情報（タイムアウト付き）
+  const getBrowserLocation = () =>
+    new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('geolocation timeout')), 8000);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          clearTimeout(timer);
+          resolve({
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+            city: null,   // 必要なら逆ジオで補完
+            region: null,
+            source: 'browser',
+          });
+        },
+        (err) => {
+          clearTimeout(timer);
+          reject(err);
+        },
+        { enableHighAccuracy: true, timeout: 7000, maximumAge: 30000 }
+      );
+    });
 
   // IPベースのフォールバック（ipapi）
   const getIpLocation = async () => {
@@ -759,6 +754,7 @@ async function getLocationWithFallback() {
     }
   }
 }
+
 
 
       
