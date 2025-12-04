@@ -284,3 +284,34 @@ app.post('/logout', (req, res) => {
   res.clearCookie('refresh_token');
   res.json({ ok: true });
 });
+
+
+
+// DB 接続 -------------------
+const { Client } = require("pg");
+
+const db = new Client({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+  ssl: { rejectUnauthorized: false } 
+});
+// Render PostgreSQL は SSL 必須
+
+// /db-test → DB と接続できるか確認する
+app.get("/db-test", async (req, res) => {
+  try {
+    await db.connect();  
+    const result = await db.query("SELECT NOW()");
+    res.json({ ok: true, time: result.rows[0].now });
+
+    db.end();  
+  } catch (err) {
+    res.json({ ok: false, error: err.message });
+  }
+});
+
+
+
