@@ -298,18 +298,54 @@ const db = new Client({
   database: process.env.DB_NAME,
   ssl: { rejectUnauthorized: false } 
 });
-// Render PostgreSQL は SSL 必須
 
-// /db-test → DB と接続できるか確認する
-app.get("/db-test", async (req, res) => {
+db.connect()
+  .then(() => console.log("DB connected"))
+  .catch(err => console.error("DB connection error:", err));
+
+// テーブル作成 -------------------
+async function createTables() {
   try {
-    await db.connect();  
-    const result = await db.query("SELECT NOW()");
-    res.json({ ok: true, time: result.rows[0].now });
+    // usersテーブル
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        name TEXT
+      );
+    `);
 
-    db.end();  
+    // weather_playlistsテーブル
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS weather_playlists (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        weather TEXT NOT NULL,
+        playlist_id TEXT NOT NULL,
+        title TEXT,
+        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    console.log("Tables created successfully");
   } catch (err) {
-    res.json({ ok: false, error: err.message });
+    console.error("Table creation error:", err);
+  }
+}
+
+createTables();
+// /db-view → DB のテーブル一覧を表示
+app.get("/db-view", async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT tablename
+      FROM pg_catalog.pg_tables
+      WHERE schemaname = 'public';
+    `);
+
+    const tables = result.rows.map(row => row.tablename);
+    res.json({ ok: true, tables });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 
