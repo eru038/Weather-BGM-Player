@@ -372,66 +372,6 @@ window.onload = () => {
   initControls();
 };
 
-// 位置情報フォールバック
-async function getLocationWithFallback() {
-  // ブラウザ位置情報（タイムアウト付き）
-  const getBrowserLocation = () =>
-    new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('geolocation timeout')), 8000);
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          clearTimeout(timer);
-          resolve({
-            lat: pos.coords.latitude,
-            lon: pos.coords.longitude,
-            city: null,   // 必要なら逆ジオで補完
-            region: null,
-            source: 'browser',
-          });
-        },
-        (err) => {
-          clearTimeout(timer);
-          reject(err);
-        },
-        { enableHighAccuracy: true, timeout: 7000, maximumAge: 30000 }
-      );
-    });
-
-  // IP（ipapi）
-  const getIpLocation = async () => {
-    const res = await fetch('https://ipapi.co/json/');
-    if (!res.ok) throw new Error('ipapi failed');
-    const data = await res.json();
-    return {
-      lat: Number(data.latitude),
-      lon: Number(data.longitude),
-      city: data.city || null,       // 市区町村
-      region: data.region || null,   // 都道府県
-      country: data.country_name || null,
-      source: 'ipapi',
-    };
-  };
-
-  // デフォルト（東京）
-  const getDefaultLocation = () => ({
-    lat: 35.6895,
-    lon: 139.6917,
-    city: '東京都',
-    region: '東京都',
-    country: '日本',
-    source: 'default',
-  });
-
-  try {
-    return await getBrowserLocation();
-  } catch {
-    try {
-      return await getIpLocation();
-    } catch {
-      return getDefaultLocation();
-    }
-  }
-}
 
     async function loadBattery() {
       try {
