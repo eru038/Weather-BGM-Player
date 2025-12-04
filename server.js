@@ -15,6 +15,10 @@ const FRONTEND_URI = process.env.FRONTEND_URI || (() => {
   try { const u = new URL(REDIRECT_URI); return `${u.protocol}//${u.hostname}:${u.port}`; }
   catch (_) { return `http://127.0.0.1:${PORT}`; }
 })();
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 /* -------------------- Middlewares -------------------- */
 app.use(cookieParser());
