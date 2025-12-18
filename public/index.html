@@ -828,24 +828,26 @@
     }
 
     async function playByWeather(weather) {
-      // DB確認
+      // ログインしていない場合はDBを使わない
+      if (!window.currentUserId) {
+        await createWeatherPlaylistIframe(weather);
+        return;
+      }
+    
       const res = await fetch(
         `/api/weather-playlist/random?uid=${currentUserId}&weather=${weather}`
       );
       const data = await res.json();
     
-      // 登録済みがあればそれを使う
       if (data.found) {
-        renderPlaylistIframe(
-          data.playlist.playlist_id,
-          `${weather}（登録済み）`
-        );
+        const pid = data.playlist.playlist_id;
+        renderPlaylistIframe(pid, `${weather}（登録済み）`);
         return;
       }
     
-      // なければ検索
       await createWeatherPlaylistIframe(weather);
     }
+
 
 
     
