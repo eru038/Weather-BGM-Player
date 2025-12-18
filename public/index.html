@@ -348,8 +348,7 @@
 
         // 给 Spotify 搜索用
         window.__WEATHER_MAIN__ = main;
-        createWeatherPlaylistIframe(main);
-
+        await playByWeather(main);
       } catch (e) {
         console.error('[weather] error:', e);
         if (area) area.innerHTML = `<p>天気情報の取得に失敗しました。</p>`;
@@ -362,37 +361,10 @@
         document.documentElement.style.setProperty('--accent', savedAccent);
         document.body.style.background = `linear-gradient(180deg, ${savedAccent} 0%, #0e0f12 60%)`;
       }
-      loadWeather(); loadBattery(); bindControlEvents(); initControls();
+      loadWeather();bindControlEvents(); initControls();
     };
 
-    async function loadBattery() {
-      try {
-        const battery = await navigator.getBattery();
-        const area = document.getElementById('weather-area'); if (!area) return;
-        const updateBattery = () => {
-          const level = Math.round(battery.level * 100);
-          const charging = battery.charging ? "⚡充電中" : "";
-          let icon = "🔋";
-          if (level <= 20) icon = "🪫";
-          else if (level <= 50) icon = "🔋";
-          else if (level <= 80) icon = "🔋🔋";
-          else icon = "🔋🔋🔋";
-          const batteryInfo = document.getElementById("battery-info");
-          const html = `${icon} ${level}% ${charging}`;
-          if (batteryInfo) batteryInfo.innerHTML = html;
-          else {
-            const div = document.createElement("div");
-            div.id = "battery-info"; div.style.marginTop = "10px"; div.style.fontSize = "18px";
-            div.innerHTML = html;
-            area.appendChild(div);
-          }
-        };
-        updateBattery();
-        battery.addEventListener('levelchange', updateBattery);
-        battery.addEventListener('chargingchange', updateBattery);
-      } catch (e) { console.error("Battery APIエラー:", e); }
-    }
-
+    
     // ===== Spotify OAuth + Playback =====
 
     (function ensureSdk() {
@@ -426,7 +398,7 @@
 
     async function fetchAccessToken() { const r = await fetch('/token', { credentials: 'include' }); if (!r.ok) return null; const j = await r.json(); return j.access_token; }
     async function ensureLoggedIn() { try { const me = await api('/me'); IS_PREMIUM = (me.product === 'premium'); return true; } catch { return false; } }
-    async function isPremiumUser() { return IS_PREMIUM; }
+    
     function setLastOpenUrl(url) {
       LAST_OPEN_URL = url || null;
       const openLink = document.getElementById('open-in-spotify');
@@ -519,21 +491,6 @@
       return ['midnight ambient', 'deep focus'];
     }
 
-    // 既存の WEATHER_TO_QUERY と組み合わせ
-    async function pickSpotifyAndPlay(weatherMain) {
-      const loggedIn = await ensureLoggedIn();
-      if (!loggedIn) { return connectSpotify(); }
-      const token = await fetchAccessToken(); if (!token) return;
-
-      const weatherQueries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
-      const timeQueries = getTimeBasedQuery();
-      const queries = [...weatherQueries, ...timeQueries];
-
-      const q = encodeURIComponent(queries[0]);
-      const res = await fetch('https://api.spotify.com/v1/search?type=playlist,track&limit=1&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
-      // 以下は既存処理と同じ
-    }
-
 
     async function waitForDeviceReady(timeoutMs = 8000) {
       const start = Date.now();
@@ -602,7 +559,7 @@
 
       setLastOpenUrl(openUrl);
 
-      if (!(await isPremiumUser())) { if (openUrl) location.href = openUrl; return; }
+      
       if (!(await ensureActiveDevice())) { if (openUrl) location.href = openUrl; return; }
 
       const body = contextUri ? { context_uri: contextUri } : { uris: [trackUri] };
@@ -909,6 +866,7 @@
         </iframe>
       `;
     }
+
 
 
 
