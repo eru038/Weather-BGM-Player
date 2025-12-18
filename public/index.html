@@ -154,29 +154,15 @@
   <main id="content">
     <h1>Weather BGM Player</h1>
     <div id="weather-area"></div>
-    <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+    <!-- <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
       <button class="spotify-btn" onclick="playWeatherOnSpotify()">天気に合わせてSpotifyで再生</button>
       <!-- このボタンは埋め込みプレイヤーまでスクロールするだけに変更 -->
       <button class="spotify-btn" style="background:#2b8a3e;" onclick="playWeatherLocally()">ブラウザでBGM再生</button>
-    </div>
+    </div> -->
     <div id="weather-playlist" style="margin-top:24px;"></div>
     <div id="weather-player" style="margin-top:24px;"></div>
 
-    <!-- 下のバーは従来通り（Spotify Web Playback 用）。ローカルmp3には使わない -->
-    <div id="player-bar">
-      <button id="btn-prev">⏮︎</button>
-      <button id="btn-play">▶</button>
-      <button id="btn-next">⏭︎</button>
-      <div id="current-track" class="muted"
-        style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-      <div style="display:flex;align-items:center;gap:6px;margin-left:12px;">
-        <span>🔊</span>
-        <input id="vol" type="range" min="0" max="100" value="50" />
-      </div>
-      <div class="spacer"></div>
-      <a id="open-in-spotify" href="#" target="_blank">Spotifyで確認する</a>
-      <span id="premium-hint" class="muted">Premiumが必要</span>
-    </div>
+    
   </main>
 
   <script>
@@ -204,22 +190,11 @@
             <div style="margin-top:16px;">
               <button class="spotify-btn" onclick="playWeatherOnSpotify()">在 Spotify 播放 天気BGM</button>
             </div>
-            <audio id="audio" controls></audio>
+            
             <div id="weather-playlist" style="margin-top:24px;"></div>
-            <div id="player-bar">
-              <button id="btn-prev">⏮︎</button>
-              <button id="btn-play">▶</button>
-              <button id="btn-next">⏭︎</button>
-              <div style="display:flex;align-items:center;gap:6px;margin-left:12px;">
-                <span>🔊</span>
-                <input id="vol" type="range" min="0" max="100" value="50" />
-              </div>
-              <div class="spacer"></div>
-              <a id="open-in-spotify" href="#" target="_blank">在 Spotify 中打开</a>
-              <span id="premium-hint" class="muted">需要 Premium 才能网页内控制</span>
-            </div>
+            
           `;
-          loadWeather(); bindControlEvents(); initControls();
+          loadWeather(); 
         } else if (page === "playlist") {
           content.innerHTML = `
             <h1>🎵 プレイリスト</h1>
@@ -229,18 +204,7 @@
             </div>
             <div id="playlists" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;"></div>
             <div id="playlist-tracks" style="margin-top:20px;"></div>
-            <div id="player-bar">
-              <button id="btn-prev">⏮︎</button>
-              <button id="btn-play">▶</button>
-              <button id="btn-next">⏭︎</button>
-              <div style="display:flex;align-items:center;gap:6px;margin-left:12px;">
-                <span>🔊</span>
-                <input id="vol" type="range" min="0" max="100" value="50" />
-              </div>
-              <div class="spacer"></div>
-              <a id="open-in-spotify" href="#" target="_blank">在 Spotify 中打开</a>
-              <span id="premium-hint" class="muted">需要 Premium 才能网页内控制</span>
-            </div>
+            
           `;
           bindControlEvents(); initControls();
           renderUserPlaylists();   // ✅ 新增：加载并渲染歌单
