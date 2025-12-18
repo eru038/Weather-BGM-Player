@@ -510,28 +510,48 @@
     
     async function createWeatherPlaylistIframe(weatherMain) {
       const token = await fetchAccessToken();
+      if (!token) return;
     
-      // ログインしてない場合
-      if (!token) return connectSpotify();
-    
-      const qs = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY["Clouds"];
-      const q = encodeURIComponent(qs[0]);
+      const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
+      const q = encodeURIComponent(queries[0]);
     
       const res = await fetch(
         `https://api.spotify.com/v1/search?type=playlist&limit=1&q=${q}`,
-        { headers: { Authorization: "Bearer " + token } }
+        { headers: { Authorization: 'Bearer ' + token } }
       );
     
       const data = await res.json();
       const pl = data.playlists?.items?.[0];
+      if (!pl) return;
     
-      if (!pl || !pl.id) {
-        console.warn("プレイリスト検索失敗", data);
-        return;
+      const area = document.getElementById("weather-player");
+      area.innerHTML = "";
+    
+      const card = document.createElement("div");
+      card.className = "playlist-card";
+    
+      card.innerHTML = `
+        <h3>${weatherMain}（おすすめ）</h3>
+        <p>${pl.name}</p>
+        <iframe
+          style="border-radius:12px"
+          src="https://open.spotify.com/embed/playlist/${pl.id}"
+          width="100%"
+          height="380"
+          frameborder="0"
+          allow="encrypted-media"
+          loading="lazy">
+        </iframe>
+      `;
+    
+      // ★ ここで登録ボタンを追加
+      if (window.currentUserId) {
+        addWeatherBtn(card, pl);
       }
     
-      renderPlaylistIframe(pl.id, `${weatherMain}（おすすめ）`);
+      area.appendChild(card);
     }
+
 
 
 
