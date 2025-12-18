@@ -882,6 +882,28 @@
         card.appendChild(b);
       });
     }
+    async function playByWeather(weather) {
+      const res = await fetch(
+        `/api/weather-playlist/random?uid=${currentUserId}&weather=${weather}`
+      );
+      const data = await res.json();
+    
+      if (!data.found) return;
+    
+      const pid = data.playlist.playlist_id;
+    
+      const area = document.getElementById("weather-player");
+      area.innerHTML = `
+        <iframe
+          src="https://open.spotify.com/embed/playlist/${pid}"
+          width="100%"
+          height="380"
+          frameborder="0"
+          allow="encrypted-media">
+        </iframe>
+      `;
+    }
+
 
 
 
