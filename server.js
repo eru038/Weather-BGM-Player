@@ -351,9 +351,28 @@ app.get("/db-view", async (req, res) => {
 
 
 // 天気別プレイリスト登録
+// 天気別プレイリスト登録
 app.post("/api/weather-playlist/add", async (req, res) => {
   try {
     const { uid, weather, pid, title } = req.body;
+
+    // すでに登録されていないか確認
+    const chk = await db.query(
+      `
+      SELECT id
+      FROM weather_playlists
+      WHERE user_id = $1 AND weather = $2 AND playlist_id = $3
+      `,
+      [uid, weather, pid]
+    );
+
+    if (chk.rows.length > 0) {
+      return res.json({
+        ok: true,
+        skipped: true,
+        message: "すでに登録されています"
+      });
+    }
 
     await db.query(
       `
@@ -363,11 +382,16 @@ app.post("/api/weather-playlist/add", async (req, res) => {
       [uid, weather, pid, title]
     );
 
-    res.json({ ok: true });
+    res.json({
+      ok: true,
+      skipped: false,
+      message: `${weather} 用に「${title}」を登録しました`
+    });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
+
 
 
 
