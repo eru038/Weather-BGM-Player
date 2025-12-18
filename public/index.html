@@ -860,6 +860,29 @@
 
     // ページ読み込み時に更新
     updateNavLoginButton();
+    function addWeatherBtn(card, pl) {
+      ["sunny", "cloudy"].forEach(w => {
+        const b = document.createElement("button");
+        b.textContent = w === "sunny" ? "晴れ用に登録" : "曇り用に登録";
+    
+        b.onclick = async () => {
+          await fetch("/api/weather-playlist/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uid: currentUserId,
+              weather: w,
+              pid: pl.id,
+              title: pl.name
+            })
+          });
+          alert("登録しました");
+        };
+  
+        card.appendChild(b);
+      });
+    }
+
 
 
   </script>
