@@ -350,4 +350,54 @@ app.get("/db-view", async (req, res) => {
 });
 
 
+// 天気別プレイリスト登録
+app.post("/api/weather-playlist/add", async (req, res) => {
+  try {
+    const { uid, weather, pid, title } = req.body;
+
+    await db.query(
+      `
+      INSERT INTO weather_playlists (user_id, weather, playlist_id, title)
+      VALUES ($1, $2, $3, $4)
+      `,
+      [uid, weather, pid, title]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+
+
+
+// 天気別ランダムプレイリスト取得
+app.get("/api/weather-playlist/random", async (req, res) => {
+  try {
+    const { uid, weather } = req.query;
+
+    const result = await db.query(
+      `
+      SELECT playlist_id, title
+      FROM weather_playlists
+      WHERE user_id = $1 AND weather = $2
+      ORDER BY RANDOM()
+      LIMIT 1
+      `,
+      [uid, weather]
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({ found: false });
+    }
+
+    res.json({ found: true, playlist: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+
+
 
