@@ -422,6 +422,18 @@ app.get("/api/weather-playlist/random", async (req, res) => {
   }
 });
 
+// ⚠️ 一時的：DBメンテナンス用
+app.get("/__admin/create-index", async (req, res) => {
+  try {
+    await db.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS uniq_weather_playlist
+      ON weather_playlists (user_id, weather, playlist_id);
+    `);
 
+    res.send("OK: index created");
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
 
 
