@@ -477,44 +477,19 @@
       const token = await fetchAccessToken();
       if (!token) return;
     
-      const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
+      const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY["Clouds"];
       const q = encodeURIComponent(queries[0]);
     
       const res = await fetch(
         `https://api.spotify.com/v1/search?type=playlist&limit=1&q=${q}`,
-        { headers: { Authorization: 'Bearer ' + token } }
+        { headers: { Authorization: "Bearer " + token } }
       );
     
       const data = await res.json();
       const pl = data.playlists?.items?.[0];
-      if (!pl) return;
+      if (!pl || !pl.id) return;
     
-      const area = document.getElementById("weather-player");
-      area.innerHTML = "";
-    
-      const card = document.createElement("div");
-      card.className = "playlist-card";
-    
-      card.innerHTML = `
-        <h3>${weatherMain}（おすすめ）</h3>
-        <p>${pl.name}</p>
-        <iframe
-          style="border-radius:12px"
-          src="https://open.spotify.com/embed/playlist/${pl.id}"
-          width="100%"
-          height="380"
-          frameborder="0"
-          allow="encrypted-media"
-          loading="lazy">
-        </iframe>
-      `;
-    
-      // ★ ここで登録ボタンを追加
-      if (window.currentUserId) {
-        addWeatherBtn(card, pl);
-      }
-    
-      area.appendChild(card);
+      renderPlaylistIframe(pl.id, `${weatherMain}（おすすめ）`, weatherMain);
     }
 
 
@@ -533,7 +508,7 @@
 
       const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
       const q = encodeURIComponent(queries[0]);
-      const res = await fetch('https://api.spotify.com/v1/search?type=playlist,track&limit=1&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
+      //const res = await fetch('https://api.spotify.com/v1/search?type=playlist,track&limit=1&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
       if (!res.ok) return;
       const data = await res.json();
 
@@ -794,6 +769,8 @@
         b.textContent = w === "sunny" ? "晴れ用に登録" : "曇り用に登録";
     
         b.onclick = async () => {
+          console.log(`${pl.name} を ${w} に登録`);
+    
           await fetch("/api/weather-playlist/add", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -805,28 +782,22 @@
             })
           });
     
-          alert("登録しました");
+          console.log("登録されました");
         };
     
         card.appendChild(b);
       });
     }
 
+
     async function playByWeather(weather) {
-      // ログインしていない場合はDBを使わない
-      if (!window.currentUserId) {
-        await createWeatherPlaylistIframe(weather);
-        return;
-      }
-    
       const res = await fetch(
         `/api/weather-playlist/random?uid=${currentUserId}&weather=${weather}`
       );
       const data = await res.json();
     
       if (data.found) {
-        const pid = data.playlist.playlist_id;
-        renderPlaylistIframe(pid, `${weather}（登録済み）`);
+        renderPlaylistIframe(data.playlist.playlist_id);
         return;
       }
     
@@ -836,12 +807,13 @@
 
 
     
-    function renderPlaylistIframe(pid, title = null) {
+    function renderPlaylistIframe(pid, title = null, weather = null) {
       const area = document.getElementById("weather-player");
       if (!area) return;
     
       area.innerHTML = `
         ${title ? `<h3>${title}</h3>` : ""}
+    
         <iframe
           style="border-radius:12px"
           src="https://open.spotify.com/embed/playlist/${pid}"
@@ -851,8 +823,24 @@
           allow="encrypted-media"
           loading="lazy">
         </iframe>
+    
+        ${
+          weather
+            ? `<button id="reg-weather-btn" style="margin-top:12px;">
+                 この天気に登録
+               </button>`
+            : ""
+        }
       `;
+    
+      if (weather) {
+        const btn = document.getElementById("reg-weather-btn");
+        btn.onclick = () => {
+          console.log(`【登録】${weather} にプレイリスト ${pid} を登録しました`);
+        };
+      }
     }
+
 
 
 
