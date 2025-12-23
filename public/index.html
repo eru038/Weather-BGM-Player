@@ -702,6 +702,84 @@
         console.error('ログアウト失敗:', err);
       }
     }
+    
+        // ページ読み込み時に更新
+        updateNavLoginButton();
+        function addWeatherBtn(card, pl) {
+            ["sunny", "cloudy"].forEach(w => {
+                const b = document.createElement("button");
+                b.textContent = w === "sunny" ? "晴れ用に登録" : "曇り用に登録";
+
+                b.onclick = async () => {
+                    console.log(`${pl.name} を ${w} に登録`);
+
+                    const res = await fetch("/api/weather-playlist/add", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            uid: currentUserId,
+                            weather: w,
+                            pid: pl.id,
+                            title: pl.name
+                        })
+                    });
+
+                    const json = await res.json();
+                    console.log(json.message);
+                };
+
+                card.appendChild(b);
+            });
+        }
+
+
+        async function playByWeather(weather) {
+            const res = await fetch(
+                `/api/weather-playlist/random?uid=${currentUserId}&weather=${weather}`
+            );
+            const data = await res.json();
+
+            if (data.found) {
+                renderPlaylistIframe(
+                    data.playlist.playlist_id,
+                    data.playlist.title
+                );
+                return;
+            }
+
+            await createWeatherPlaylistIframe(weather);
+        }
+
+
+
+
+
+        function renderPlaylistIframe(pid, title = null) {
+            const area = document.getElementById("weather-player");
+            if (!area) return;
+
+            area.innerHTML = `
+            ${title ? `<h3>${title}</h3>` : ""}
+            <iframe
+                style="border-radius:12px"
+                src="https://open.spotify.com/embed/playlist/${pid}"
+                width="100%"
+                height="380"
+                frameborder="0"
+                allow="encrypted-media"
+                loading="lazy">
+            </iframe>
+            `;
+        }
+
+
+
+
+
+
+
+
+
 
 
 
