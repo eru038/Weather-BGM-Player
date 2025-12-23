@@ -607,6 +607,10 @@
             e.stopPropagation();
             await renderTracksForPlaylist(id, card, tracksPanel);
           });
+          addWeatherBtn(card, {
+            id: id,
+            name: card.querySelector('div[style*="font-weight"]').textContent
+          });
         });
 
       } catch (e) {
