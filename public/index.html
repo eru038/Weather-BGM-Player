@@ -161,6 +161,7 @@
     </div> -->
     <div id="weather-playlist" style="margin-top:24px;"></div>
     <div id="weather-player" style="margin-top:24px;"></div>
+    
 
     
   </main>
@@ -840,6 +841,76 @@
         };
       }
     }
+    /* ===== 仮のグローバル値 ===== */
+const uid = "demo-user"; 
+const weather = "Clouds";
+
+/*
+  ↑
+  本当は
+  - uid → ログイン後にセット
+  - weather → 天気取得後にセット
+*/
+
+/* ===== 天気プレイリスト描画 ===== */
+function renderWeatherPlaylist(pl) {
+  const area = document.getElementById("weather-playlist");
+
+  area.innerHTML = `
+    <div class="playlist-card">
+      <h3>${pl.title}</h3>
+
+      <iframe
+        src="https://open.spotify.com/embed/playlist/${pl.pid}"
+        width="100%"
+        height="152"
+        frameborder="0"
+        allow="encrypted-media">
+      </iframe>
+
+      <button onclick="addWeatherPlaylist()">
+        この天気に登録
+      </button>
+    </div>
+  `;
+}
+
+/* ===== 登録処理 ===== */
+async function addWeatherPlaylist() {
+  const data = {
+    uid: uid,
+    weather: weather,
+    pid: currentPlaylist.pid,
+    title: currentPlaylist.title
+  };
+
+  try {
+    const res = await fetch("/api/weather-playlist/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    const json = await res.json();
+
+    if (json.ok) {
+      console.log(json.message);
+    } else {
+      console.error(json.error);
+    }
+
+  } catch (e) {
+    console.error("登録失敗", e);
+  }
+}
+
+/* ===== 表示用ダミーデータ ===== */
+const currentPlaylist = {
+  pid: "37i9dQZF1DX0Yxoavh5qJV",
+  title: "indie rock & cloudy days"
+};
+
+renderWeatherPlaylist(currentPlaylist);
 
 
 
