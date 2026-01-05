@@ -784,47 +784,40 @@
             `;
         }
 
-    async function renderWeatherPlaylistFromDB(main) {
-  const container = document.getElementById('weather-playlist');
-  if (!container) return;
-
-  const key = resolveWeatherKey(main || 'Default');
+async function renderWeatherPlaylistFromDB(weather) {
+  // ログインしていなければDBは使わない
+  const token = localStorage.getItem('spotify_token');
+  if (!token || !currentUserId) {
+    return false;
+  }
 
   try {
     const res = await fetch(
-      `/api/weather-playlist/random-public?weather=${encodeURIComponent(key)}`
+      `/api/weather-playlist/random?uid=${encodeURIComponent(currentUserId)}&weather=${encodeURIComponent(weather)}`
     );
-    const data = await res.json();
 
-    if (!data || !data.found) {
+    // 200以外は使わない
+    if (!res.ok) {
+      console.warn('[DB playlist] not ok', res.status);
       return false;
     }
 
-    const pid = data.playlist.playlist_id;
+    const data = await res.json();
 
-    container.innerHTML = `
-      <div class="playlist-card">
-        <h4>天気に合わせたSpotifyプレイリスト</h4>
-        <p class="muted" style="font-size:14px;margin-bottom:12px;">
-          登録されたプレイリストからランダム再生
-        </p>
-        <iframe
-          style="border-radius:12px"
-          src="https://open.spotify.com/embed/playlist/${pid}"
-          width="100%"
-          height="352"
-          frameborder="0"
-          allow="encrypted-media"
-          loading="lazy">
-        </iframe>
-      </div>
-    `;
+    if (!data.found) {
+      return false;
+    }
 
-    updateCurrentTrackLabel(`登録プレイリスト（${key}）`);
+    // iframe差し替え
+    const frame = document.getElementById('playlist-frame');
+    if (!frame) return false;
+
+    frame.src = `https://open.spotify.com/embed/playlist/${data.playlist.playlist_id}`;
+
     return true;
 
   } catch (e) {
-    console.error("DB playlist load error", e);
+    console.error('[DB playlist load error]', e);
     return false;
   }
 }
