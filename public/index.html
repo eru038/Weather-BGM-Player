@@ -250,7 +250,7 @@ function mapWeather(main) {
     async function loadWeather() {
       const area = document.getElementById('weather-area');
       if (!area) return;
-
+      let used = false;
       try {
         const loc = await getLocationWithFallback();
         const lat = loc.lat;
@@ -313,7 +313,7 @@ if (!used) {
 
 setWeatherAnimation(w.key);
 
-        const used = await renderWeatherPlaylistFromDB(main);
+        used = await renderWeatherPlaylistFromDB(main);
         if (!used) {
           renderWeatherPlaylist(main);
         }
@@ -325,7 +325,7 @@ setWeatherAnimation(w.key);
         if (area) area.innerHTML = `<p>天気情報の取得に失敗しました。</p>`;
         window.__WEATHER_MAIN__ = 'Default';
         
-        const used = await renderWeatherPlaylistFromDB('Default');
+        used = await renderWeatherPlaylistFromDB('Default');
         if (!used) {
           renderWeatherPlaylist('Default');
         }
