@@ -278,6 +278,7 @@
           `;
                     bindControlEvents(); initControls();
                     renderUserPlaylists();
+                    updateRegisterButtons();
                 } else if (page === "settings") {
                     content.innerHTML = `
             <h1>⚙️ 設定</h1>
@@ -309,38 +310,48 @@
 
         // ★ここを「自作BGMリスト」→「Spotify埋め込みプレーヤー表示」に変更
         function renderWeatherPlaylist(main) {
-      const container = document.getElementById('weather-playlist');
-      if (!container) return;
+    const container = document.getElementById('weather-playlist');
+    if (!container) return;
 
-      const key = resolveWeatherKey(main || 'Default');
-      const playlistId = WEATHER_SPOTIFY_EMBEDS[key] || WEATHER_SPOTIFY_EMBEDS['Default'];
-      if (!playlistId) {
-        container.innerHTML = `<div class="muted">この天気のプレイリストが設定されていません。</div>`;
+    const key = resolveWeatherKey(main || 'Default');
+
+    const saved = localStorage.getItem(`weather_playlist_${key}`);
+
+    const playlistId =
+        saved ||
+        WEATHER_SPOTIFY_EMBEDS[key] ||
+        WEATHER_SPOTIFY_EMBEDS['Default'];
+
+    if (!playlistId) {
+        container.innerHTML = `
+<div class="muted">
+この天気のプレイリストが設定されていません。
+</div>
+`;
         return;
-      }
-
-      const src = `https://open.spotify.com/embed/playlist/${encodeURIComponent(playlistId)}?utm_source=generator`;
-
-      container.innerHTML = `
-        <div class="playlist-card">
-          <h4>天気に合わせたSpotifyプレイリスト</h4>
-          <p class="muted" style="font-size:14px;margin-bottom:12px;">
-            下のSpotifyプレイヤーから直接再生できます。
-          </p>
-          <iframe
-            style="border-radius:12px"
-            src="${src}"
-            width="100%"
-            height="352"
-            frameborder="0"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy">
-          </iframe>
-        </div>
-      `;
-
-      updateCurrentTrackLabel(`Spotifyプレイリスト（${key}）`);
     }
+
+    const src = `https://open.spotify.com/embed/playlist/${encodeURIComponent(playlistId)}?utm_source=generator`;
+
+    container.innerHTML = `
+<div class="playlist-card">
+  <h4>天気に合わせたSpotifyプレイリスト</h4>
+  <p class="muted" style="font-size:14px;margin-bottom:12px;">
+    下のSpotifyプレイヤーから直接再生できます。
+  </p>
+  <iframe
+    style="border-radius:12px"
+    src="${src}"
+    width="100%"
+    height="352"
+    frameborder="0"
+    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+    loading="lazy">
+  </iframe>
+</div>
+`;
+    updateCurrentTrackLabel(`Spotifyプレイリスト（${key}）`);
+}
 
         function ensureLocalVolume(player, slider) {
             if (!player) return;
@@ -992,6 +1003,29 @@
 function updateNavLoginButton() {
   // 今は何もしない
 }
+
+        function registerPlaylist(weather, pid) {
+    const key = `weather_playlist_${weather}`;
+    localStorage.setItem(key, pid);
+
+    updateRegisterButtons();
+}
+function updateRegisterButtons() {
+    document.querySelectorAll("[data-weather][data-pid]").forEach(btn => {
+        const w = btn.dataset.weather;
+        const pid = btn.dataset.pid;
+        const saved = localStorage.getItem(`weather_playlist_${w}`);
+
+        if (saved === pid) {
+            btn.textContent = "登録済み";
+            btn.disabled = true;
+        } else {
+            btn.textContent = `${w} に登録`;
+            btn.disabled = false;
+        }
+    });
+}
+
 
 
 
