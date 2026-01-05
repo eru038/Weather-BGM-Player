@@ -421,6 +421,26 @@ app.get("/api/weather-playlist/random", async (req, res) => {
     res.status(500).json({ ok: false, error: err.message });
   }
 });
+// 登録済み一覧取得
+app.get("/api/weather-playlist/list", async (req, res) => {
+  try {
+    const { uid } = req.query;
+
+    const r = await db.query(
+      `
+      SELECT weather, playlist_id
+      FROM weather_playlists
+      WHERE user_id = $1
+      `,
+      [uid]
+    );
+
+    res.json({ ok: true, items: r.rows });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 
 // // ⚠️ 一時的：DBメンテナンス用
 // app.get("/__admin/create-index", async (req, res) => {
