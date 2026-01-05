@@ -306,7 +306,7 @@ area.innerHTML = `
 `;
 
 // ★ ここが重要：DB → fallback の順
-const used = await renderWeatherPlaylistFromDB(w.key);
+used = await renderWeatherPlaylistFromDB(w.key);
 if (!used) {
   renderWeatherPlaylist(w.key);
 }
