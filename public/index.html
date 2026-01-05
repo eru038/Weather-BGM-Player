@@ -287,15 +287,23 @@
           </div>
         `;
 
-        window.__WEATHER_MAIN__ = main;
-        renderWeatherPlaylist(main);
+        const used = await renderWeatherPlaylistFromDB(main);
+        if (!used) {
+          renderWeatherPlaylist(main);
+        }
+        
         setWeatherAnimation(main);
 
       } catch (e) {
         console.error('[weather] error:', e);
         if (area) area.innerHTML = `<p>天気情報の取得に失敗しました。</p>`;
         window.__WEATHER_MAIN__ = 'Default';
-        renderWeatherPlaylist('Default');
+        
+        const used = await renderWeatherPlaylistFromDB('Default');
+        if (!used) {
+          renderWeatherPlaylist('Default');
+        }
+        
         setWeatherAnimation('Default');
       }
     }
@@ -306,7 +314,6 @@
         document.documentElement.style.setProperty('--accent', savedAccent);
         document.body.style.background = `linear-gradient(180deg, ${savedAccent} 0%, #0e0f12 60%)`;
       }
-      renderWeatherPlaylist('Default');
       setWeatherAnimation('Default');
       loadWeather();
       bindControlEvents();
@@ -709,7 +716,7 @@
     }
     
         // ページ読み込み時に更新
-        updateNavLoginButton();
+        //updateNavLoginButton();
         function addWeatherBtn(card, pl) {
             ["sunny", "cloudy"].forEach(w => {
                 const b = document.createElement("button");
@@ -776,6 +783,52 @@
             </iframe>
             `;
         }
+
+    async function renderWeatherPlaylistFromDB(main) {
+  const container = document.getElementById('weather-playlist');
+  if (!container) return;
+
+  const key = resolveWeatherKey(main || 'Default');
+
+  try {
+    const res = await fetch(
+      `/api/weather-playlist/random-public?weather=${encodeURIComponent(key)}`
+    );
+    const data = await res.json();
+
+    if (!data || !data.found) {
+      return false;
+    }
+
+    const pid = data.playlist.playlist_id;
+
+    container.innerHTML = `
+      <div class="playlist-card">
+        <h4>天気に合わせたSpotifyプレイリスト</h4>
+        <p class="muted" style="font-size:14px;margin-bottom:12px;">
+          登録されたプレイリストからランダム再生
+        </p>
+        <iframe
+          style="border-radius:12px"
+          src="https://open.spotify.com/embed/playlist/${pid}"
+          width="100%"
+          height="352"
+          frameborder="0"
+          allow="encrypted-media"
+          loading="lazy">
+        </iframe>
+      </div>
+    `;
+
+    updateCurrentTrackLabel(`登録プレイリスト（${key}）`);
+    return true;
+
+  } catch (e) {
+    console.error("DB playlist load error", e);
+    return false;
+  }
+}
+
 
 
 
