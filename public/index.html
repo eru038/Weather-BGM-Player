@@ -77,6 +77,7 @@
 
 
   <script>
+    const reg = new Set();
     let currentUserId = null;
     const content = document.getElementById('content');
     const OWM_API_KEY = "677857b64fb220eca86422d22aa48502";
@@ -778,6 +779,78 @@
             </iframe>
             `;
         }
+    async function loadRegistered() {
+      if (!currentUserId) return;
+    
+      const r = await fetch(`/api/weather-playlist/list?uid=${currentUserId}`);
+      const j = await r.json();
+    
+      reg.clear();
+      j.items.forEach(x => {
+        reg.add(`${x.weather}:${x.playlist_id}`);
+      });
+    }
+
+    function setupRegisterButton(b, weather, p) {
+      const key = `${weather}:${p.id}`;
+    
+      const refresh = () => {
+        if (reg.has(key)) {
+          b.textContent = `${weather} に登録済み`;
+        } else {
+          b.textContent = `${weather} に登録`;
+        }
+      };
+    
+      refresh();
+    
+      b.onclick = async () => {
+        if (!currentUserId) return;
+    
+        if (reg.has(key)) {
+          // 削除
+          await fetch("/api/weather-playlist/remove", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uid: currentUserId,
+              weather,
+              pid: p.id
+            })
+          });
+          reg.delete(key);
+        } else {
+          // 登録
+          await fetch("/api/weather-playlist/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uid: currentUserId,
+              weather,
+              pid: p.id,
+              title: p.name
+            })
+          });
+          reg.add(key);
+        }
+    
+        refresh();
+      };
+    }
+    async function loadRandomIframe(weather) {
+      const r = await fetch(
+        `/api/weather-playlist/random?uid=${currentUserId}&weather=${weather}`
+      );
+      const j = await r.json();
+    
+      if (!j.found) return;
+    
+      const iframe = document.getElementById("player");
+      iframe.src = `https://open.spotify.com/embed/playlist/${j.playlist.playlist_id}`;
+    }
+
+
+
     
 
 
