@@ -776,38 +776,7 @@
             </iframe>
             `;
         }
-    let currentUserId = null;
-    function updateNavLoginButton() {
-      const btn = document.getElementById('login-btn');
-      if (!btn) return;
     
-      const token = localStorage.getItem('spotify_token');
-    
-      if (token) {
-        btn.textContent = 'Spotify ログアウト';
-        btn.onclick = () => {
-          localStorage.removeItem('spotify_token');
-          currentUserId = null;
-          updateNavLoginButton();
-        };
-      } else {
-        btn.textContent = 'Spotify ログイン';
-        btn.onclick = () => {
-          startSpotifyLogin();
-        };
-      }
-    }
-    async function ensureLoggedIn() {
-      const token = localStorage.getItem('spotify_token');
-      if (!token) return false;
-    
-      if (!currentUserId) {
-        const me = await api('/me');
-        currentUserId = me.id;
-      }
-    
-      return true;
-    }
 
 
 
