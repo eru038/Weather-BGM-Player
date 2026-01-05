@@ -440,6 +440,25 @@ app.get("/api/weather-playlist/list", async (req, res) => {
     res.status(500).json({ ok: false, error: e.message });
   }
 });
+// 登録削除
+app.post("/api/weather-playlist/remove", async (req, res) => {
+  try {
+    const { uid, weather, pid } = req.body;
+
+    await db.query(
+      `
+      DELETE FROM weather_playlists
+      WHERE user_id = $1 AND weather = $2 AND playlist_id = $3
+      `,
+      [uid, weather, pid]
+    );
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 
 
 // // ⚠️ 一時的：DBメンテナンス用
