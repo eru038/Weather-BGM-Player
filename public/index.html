@@ -779,17 +779,19 @@
             </iframe>
             `;
         }
-    async function loadRegistered() {
-      if (!currentUserId) return;
-    
-      const r = await fetch(`/api/weather-playlist/list?uid=${currentUserId}`);
-      const j = await r.json();
-    
-      reg.clear();
-      j.items.forEach(x => {
-        reg.add(`${x.weather}:${x.playlist_id}`);
-      });
-    }
+    // 登録済み一覧をDBから取得
+async function loadRegistered() {
+  if (!currentUserId) return;
+
+  const r = await fetch(`/api/weather-playlist/list?uid=${currentUserId}`);
+  const j = await r.json();
+
+  reg.clear();
+  j.items.forEach(x => {
+    reg.add(`${x.weather}:${x.playlist_id}`);
+  });
+}
+
 
     function setupRegisterButton(b, weather, p) {
       const key = `${weather}:${p.id}`;
@@ -808,7 +810,6 @@
         if (!currentUserId) return;
     
         if (reg.has(key)) {
-          // 削除
           await fetch("/api/weather-playlist/remove", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -820,7 +821,6 @@
           });
           reg.delete(key);
         } else {
-          // 登録
           await fetch("/api/weather-playlist/add", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -834,9 +834,10 @@
           reg.add(key);
         }
     
-        refresh();
+        refresh(); // ← これが無いと見た目が変わらない
       };
     }
+
     async function loadRandomIframe(weather) {
       const r = await fetch(
         `/api/weather-playlist/random?uid=${currentUserId}&weather=${weather}`
@@ -849,6 +850,31 @@
       iframe.src = `https://open.spotify.com/embed/playlist/${j.playlist.playlist_id}`;
     }
 
+async function loadHomePlaylist(weather) {
+  if (!currentUserId) return;
+
+  const r = await fetch(
+    `/api/weather-playlist/random?uid=${currentUserId}&weather=${weather}`
+  );
+  const j = await r.json();
+
+  if (!j.found) return;
+
+  const iframe = document.getElementById("home-player");
+  iframe.src =
+    `https://open.spotify.com/embed/playlist/${j.playlist.playlist_id}`;
+}
+async function showHome() {
+  await loadRegistered();
+
+  const weather = window.__CURRENT_WEATHER__; 
+  // 例: "cloudy"
+  console.log("uid", currentUserId);
+  console.log("weather", weather);
+
+
+  await loadHomePlaylist(weather);
+}
 
 
     
