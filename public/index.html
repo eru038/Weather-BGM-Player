@@ -185,6 +185,7 @@
             下のSpotifyプレイヤーから直接再生できます。
           </p>
           <iframe
+          　id="playlist-frame"
             style="border-radius:12px"
             src="${src}"
             width="100%"
@@ -744,31 +745,52 @@ setWeatherAnimation(w.key);
         // ページ読み込み時に更新
         //updateNavLoginButton();
         function addWeatherBtn(card, pl) {
-            ["sunny", "cloudy"].forEach(w => {
-                const b = document.createElement("button");
-                b.textContent = w === "sunny" ? "晴れ用に登録" : "曇り用に登録";
+    ["sunny", "cloudy"].forEach(w => {
+        const b = document.createElement("button");
+        b.textContent = w === "sunny" ? "晴れ用に登録" : "曇り用に登録";
 
-                b.onclick = async () => {
-                    console.log(`${pl.name} を ${w} に登録`);
+        b.onclick = async () => {
 
-                    const res = await fetch("/api/weather-playlist/add", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            uid: currentUserId,
-                            weather: w,
-                            pid: pl.id,
-                            title: pl.name
-                        })
-                    });
+            if (!currentUserId) {
+                alert("Spotifyにログインしてください");
+                return;
+            }
 
-                    const json = await res.json();
-                    console.log(json.message);
-                };
+            console.log(`${pl.name} を ${w} に登録`);
 
-                card.appendChild(b);
-            });
-        }
+            try {
+                const res = await fetch("/api/weather-playlist/add", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        uid: currentUserId,
+                        weather: w,
+                        pid: pl.id,
+                        title: pl.name
+                    })
+                });
+
+                const json = await res.json();
+                console.log(json.message);
+
+                if (json.ok) {
+                    console.log("登録成功 → 表示更新");
+
+                    // ここが超重要
+                    await loadWeatherPlaylist(w);
+                } else {
+                    alert("登録に失敗しました");
+                }
+
+            } catch (e) {
+                console.error("登録エラー", e);
+            }
+        };
+
+        card.appendChild(b);
+    });
+}
+
 
 
         async function playByWeather(weather) {
@@ -849,10 +871,36 @@ async function renderWeatherPlaylistFromDB(weather) {
 }
 
 
+async function loadWeatherPlaylist(weather) {
+    if (!currentUserId) return;
 
+    try {
+        const res = await fetch(
+            `/api/weather-playlist/random?uid=${currentUserId}&weather=${weather}`
+        );
 
+        const json = await res.json();
 
+        if (!json.found) {
+            console.log("未登録のためデフォルト表示");
+            return;
+        }
 
+        const iframe = document.getElementById("playlist-frame");
+        if (!iframe) {
+            console.error("playlist-frame が見つからない");
+            return;
+        }
+
+        iframe.src =
+            `https://open.spotify.com/embed/playlist/${json.playlist.playlist_id}`;
+
+        console.log("iframe 更新:", json.playlist.playlist_id);
+
+    } catch (e) {
+        console.error("loadWeatherPlaylist error", e);
+    }
+}
 
 
 
