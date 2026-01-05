@@ -252,11 +252,11 @@
     <h1>Weather BGM Player</h1>
     <div id="weather-area"></div>
 
-    <div style="margin-top:16px;">
-      <button class="spotify-btn" onclick="playWeatherOnSpotify()">
-        在 Spotify 播放 天気BGM
-      </button>
-    </div>
+    // <div style="margin-top:16px;">
+    //   <button class="spotify-btn" onclick="playWeatherOnSpotify()">
+    //     在 Spotify 播放 天気BGM
+    //   </button>
+    // </div>
 
     <div id="weather-playlist" style="margin-top:24px;"></div>
   `;
@@ -276,7 +276,7 @@
             <div id="playlist-tracks" style="margin-top:20px;"></div>
             
           `;
-                    bindControlEvents(); Controls();
+                    bindControlEvents(); initControls();
                     renderUserPlaylists();
                 } else if (page === "settings") {
                     content.innerHTML = `
@@ -288,7 +288,7 @@
               <input type="color" id="color-input" />
             </div>
           `;
-                    setupColorPicker(); Controls();
+                    setupColorPicker(); initControls();
                 }
                 content.classList.remove("fade-out");
             }, 400);
@@ -455,7 +455,7 @@
             setWeatherAnimation('Default');
             loadWeather();
             bindControlEvents();
-            Controls();
+            initControls();
 
             const loginBtn = document.getElementById('login-btn');
             if (loginBtn) {
@@ -991,6 +991,9 @@
                 renderWeatherPlaylist(weather);
             }
         }
+function updateNavLoginButton() {
+  // 今は何もしない
+}
 
 
 
