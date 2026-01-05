@@ -224,6 +224,28 @@
         document.body.style.background = `linear-gradient(180deg, ${newColor} 0%, #0e0f12 60%)`;
       });
     }
+function mapWeather(main) {
+  if (main === "Clear") {
+    return { label: "晴れ", key: "sunny", icon: "☀️", accent: "#f7b733" };
+  }
+  if (main === "Clouds") {
+    return { label: "くもり", key: "cloudy", icon: "☁️", accent: "#5f9ea0" };
+  }
+  if (main === "Rain" || main === "Drizzle") {
+    return { label: "雨", key: "rainy", icon: "🌧️", accent: "#4a90e2" };
+  }
+  if (main === "Snow") {
+    return { label: "雪", key: "snowy", icon: "❄️", accent: "#00bcd4" };
+  }
+  if (main === "Thunderstorm") {
+    return { label: "雷雨", key: "rainy", icon: "⛈️", accent: "#3b3b98" };
+  }
+  if (main === "Mist" || main === "Fog") {
+    return { label: "霧", key: "cloudy", icon: "🌫️", accent: "#aab2bd" };
+  }
+
+  return { label: "天気", key: "default", icon: "🌈", accent: "#1db954" };
+}
 
     async function loadWeather() {
       const area = document.getElementById('weather-area');
@@ -251,41 +273,45 @@
           return;
         }
 
-        const wData = await wRes.json();
+      const wData = await wRes.json();
 
-        const temp = Math.round(wData?.main?.temp ?? NaN);
-        const weather = wData?.weather?.[0]?.description || '—';
-        const main = wData?.weather?.[0]?.main || 'Clouds';
-        const city = cityFromGeo || wData?.name || '—';
+const t = Math.round(wData?.main?.temp ?? NaN);
+const main = wData?.weather?.[0]?.main || "Clouds";
+const city = cityFromGeo || wData?.name || "—";
 
-        let icon = "🌈"; let accent = "#1db954";
-        switch (main) {
-          case "Clear": icon = "☀️"; accent = "#f7b733"; break;
-          case "Clouds": icon = "☁️"; accent = "#5f9ea0"; break;
-          case "Rain": icon = "🌧️"; accent = "#4a90e2"; break;
-          case "Drizzle": icon = "🌦️"; accent = "#6ec6ff"; break;
-          case "Thunderstorm": icon = "⛈️"; accent = "#3b3b98"; break;
-          case "Snow": icon = "❄️"; accent = "#00bcd4"; break;
-          case "Mist":
-          case "Fog": icon = "🌫️"; accent = "#aab2bd"; break;
-        }
+const w = mapWeather(main);
 
-        const savedAccent = localStorage.getItem('accentColor');
-        const finalAccent = savedAccent || accent;
-        document.documentElement.style.setProperty('--accent', finalAccent);
-        document.body.style.background = `linear-gradient(180deg, ${finalAccent} 0%, #0e0f12 60%)`;
+const saved = localStorage.getItem("accentColor");
+const finalAccent = saved || w.accent;
 
-        const tempHtml = isNaN(temp) ? '—' : `${temp}°C`;
-        area.innerHTML = `
-          <div class="weather">
-            <h3>${city} の天気</h3>
-            <p>${icon} ${weather}</p>
-            <div class="temp">${tempHtml}</div>
-            <div style="margin-top:6px;opacity:.7;font-size:14px;">データ元: ${loc.source === 'browser' ? 'ブラウザ位置情報'
-              : loc.source === 'ipapi' ? 'IP位置情報'
-              : 'デフォルト'}</div>
-          </div>
-        `;
+document.documentElement.style.setProperty("--accent", finalAccent);
+document.body.style.background =
+  `linear-gradient(180deg, ${finalAccent} 0%, #0e0f12 60%)`;
+
+const tempHtml = isNaN(t) ? "—" : `${t}°C`;
+
+area.innerHTML = `
+  <div class="weather">
+    <h3>${city} の天気</h3>
+    <p>${w.icon} ${w.label}</p>
+    <div class="temp">${tempHtml}</div>
+    <div style="margin-top:6px;opacity:.7;font-size:14px;">
+      データ元: ${
+        loc.source === "browser" ? "ブラウザ位置情報"
+        : loc.source === "ipapi" ? "IP位置情報"
+        : "デフォルト"
+      }
+    </div>
+  </div>
+`;
+
+// ★ ここが重要：DB → fallback の順
+const used = await renderWeatherPlaylistFromDB(w.key);
+if (!used) {
+  renderWeatherPlaylist(w.key);
+}
+
+setWeatherAnimation(w.key);
 
         const used = await renderWeatherPlaylistFromDB(main);
         if (!used) {
