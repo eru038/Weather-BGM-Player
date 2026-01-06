@@ -850,69 +850,40 @@ setWeatherAnimation(main);
             `;
         }
 
-async function renderWeatherPlaylistFromDB(weather) {
-  // ログインしていなければDBは使わない
-  const token = localStorage.getItem('spotify_token');
-  if (!token || !currentUserId) {
-    return false;
-  }
-
-  try {
-    const res = await fetch(
-      `/api/weather-playlist/random?uid=${encodeURIComponent(currentUserId)}&weather=${encodeURIComponent(weather)}`
-    );
-
-    // 200以外は使わない
-    if (!res.ok) {
-      console.warn('[DB playlist] not ok', res.status);
-      return false;
-    }
-
-    const data = await res.json();
-
-    if (!data.found) {
-      return false;
-    }
-
-    // iframe差し替え
-    const frame = document.getElementById("playlist-frame");
-    if (!frame) return false;
-
-    frame.src = `https://open.spotify.com/embed/playlist/${data.playlist.playlist_id}`;
-
-    return true;
-
-  } catch (e) {
-    console.error('[DB playlist load error]', e);
-    return false;
-  }
-}
 
 
 async function loadWeatherPlaylist(weather) {
+    // ログインしていなければ何もしない
     if (!currentUserId) return;
+
+    // iframe が存在しないページでは何もしない
+    const iframe = document.getElementById("playlist-frame");
+    if (!iframe) {
+        // playlist ページなどではここに来る
+        return;
+    }
 
     try {
         const res = await fetch(
-            `/api/weather-playlist/random?uid=${currentUserId}&weather=${weather}`
+            `/api/weather-playlist/random?uid=${encodeURIComponent(currentUserId)}&weather=${encodeURIComponent(weather)}`
         );
+
+        if (!res.ok) {
+            console.warn("[weather-playlist] response not ok:", res.status);
+            return;
+        }
 
         const json = await res.json();
 
+        // DBに未登録ならデフォルトのまま
         if (!json.found) {
             console.log("DB未登録 → デフォルトのまま");
             return;
         }
 
-        // ★ iframe は「既に存在している前提」
-        const iframe = document.getElementById("playlist-frame");
-        if (!iframe) {
-            console.warn("iframe 未生成 → 後で再試行");
-            return;
-        }
-
+        // iframe を DB のプレイリストに差し替え
         iframe.src =
-          `https://open.spotify.com/embed/playlist/${json.playlist.playlist_id}`;
+            `https://open.spotify.com/embed/playlist/${json.playlist.playlist_id}`;
 
         console.log("iframe 更新:", json.playlist.playlist_id);
 
