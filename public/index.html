@@ -377,7 +377,24 @@ setWeatherAnimation(w.key);
     let spotifyPlayer = null, spotifyDeviceId = null, IS_PREMIUM = false, LAST_OPEN_URL = null;
 
     async function fetchAccessToken(){ const r = await fetch('/token', {credentials:'include'}); if(!r.ok) return null; const j = await r.json(); return j.access_token; }
-    async function ensureLoggedIn(){ try{ const me = await api('/me'); IS_PREMIUM = (me.product === 'premium'); return true; }catch{ return false; } }
+    async function ensureLoggedIn() {
+      try {
+        const me = await api('/me');
+    
+        currentUserId = me.id;
+        IS_PREMIUM = (me.product === 'premium');
+    
+        console.log("login user:", currentUserId, "premium:", IS_PREMIUM);
+    
+        return true;
+      } catch (e) {
+        console.warn("not logged in", e);
+        currentUserId = null;
+        IS_PREMIUM = false;
+        return false;
+      }
+    }
+
     async function isPremiumUser(){ return IS_PREMIUM; }
     function setLastOpenUrl(url){
       LAST_OPEN_URL = url || null;
