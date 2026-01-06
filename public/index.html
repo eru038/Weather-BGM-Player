@@ -307,12 +307,7 @@ area.innerHTML = `
 `;
 
 // ★ ここが重要：DB → fallback の順
-used = await renderWeatherPlaylistFromDB(w.key);
-if (!used) {
-  renderWeatherPlaylist(w.key);
-}
 
-setWeatherAnimation(w.key);
 
         used = await renderWeatherPlaylistFromDB(main);
         if (!used) {
@@ -900,28 +895,48 @@ async function loadWeatherPlaylist(weather) {
 
         if (!json.found) {
             console.log("未登録のためデフォルト表示");
-            return;
+            return false;
         }
 
-        const iframe = document.getElementById("playlist-frame");
-        if (!iframe) {
-            console.error("playlist-frame が見つからない");
-            return;
-        }
+        // ★ iframeを直接探さない
+        renderWeatherPlaylistFromDB(weather, json.playlist.playlist_id);
 
-        iframe.src =
-            `https://open.spotify.com/embed/playlist/${json.playlist.playlist_id}`;
-
-        console.log("iframe 更新:", json.playlist.playlist_id);
+        console.log("DBプレイリスト表示:", json.playlist.playlist_id);
+        return true;
 
     } catch (e) {
         console.error("loadWeatherPlaylist error", e);
+        return false;
     }
 }
 
 
 
 
+
+function renderWeatherPlaylistFromDB(weather, playlistId) {
+    const container = document.getElementById("weather-playlist");
+    if (!container) return;
+
+    const src =
+        `https://open.spotify.com/embed/playlist/${encodeURIComponent(playlistId)}`;
+
+    container.innerHTML = `
+      <div class="playlist-card">
+        <h4>あなたが登録したプレイリスト</h4>
+        <iframe
+          id="playlist-frame"
+          style="border-radius:12px"
+          src="${src}"
+          width="100%"
+          height="352"
+          frameborder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy">
+        </iframe>
+      </div>
+    `;
+}
 
 
 
