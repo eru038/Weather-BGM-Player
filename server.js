@@ -498,3 +498,21 @@ app.get("/__admin/viewdata", async (req, res) => {
   }
 });
 
+// 登録済みチェック
+app.get("/api/weather-playlist/check", async (req, res) => {
+  try {
+    const { uid, weather, pid } = req.query;
+
+    const result = await db.query(
+      `SELECT 1 
+       FROM weather_playlists 
+       WHERE user_id = $1 AND weather = $2 AND playlist_id = $3`,
+      [uid, weather, pid]
+    );
+
+    res.json({ registered: result.rowCount > 0 });
+  } catch (e) {
+    console.error("check error", e);
+    res.status(500).json({ registered: false, error: e.message });
+  }
+});
