@@ -475,7 +475,6 @@ app.post("/api/weather-playlist/remove", async (req, res) => {
 //   }
 // });
 
-
 app.get("/__admin/viewdata", async (req, res) => {
   try {
     const result = await db.query(`
@@ -483,10 +482,9 @@ app.get("/__admin/viewdata", async (req, res) => {
         user_id,
         weather,
         playlist_id,
-        title,
-        created_at
+        title
       FROM weather_playlists
-      ORDER BY created_at DESC
+      ORDER BY playlist_id DESC
       LIMIT 100;
     `);
 
@@ -499,3 +497,4 @@ app.get("/__admin/viewdata", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
