@@ -475,3 +475,27 @@ app.post("/api/weather-playlist/remove", async (req, res) => {
 //   }
 // });
 
+
+app.get("/__admin/viewdata", async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT
+        user_id,
+        weather,
+        playlist_id,
+        title,
+        created_at
+      FROM weather_playlists
+      ORDER BY created_at DESC
+      LIMIT 100;
+    `);
+
+    res.json({
+      count: result.rows.length,
+      rows: result.rows
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
