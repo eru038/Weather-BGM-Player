@@ -874,7 +874,7 @@ async function renderWeatherPlaylistFromDB(weather) {
     }
 
     // iframe差し替え
-    const frame = document.getElementById('playlist-frame');
+    const frame = document.getElementById("playlist-frame");
     if (!frame) return false;
 
     frame.src = `https://open.spotify.com/embed/playlist/${data.playlist.playlist_id}`;
