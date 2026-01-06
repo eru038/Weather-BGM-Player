@@ -165,40 +165,35 @@
     }
 
     // ★ここを「自作BGMリスト」→「Spotify埋め込みプレーヤー表示」に変更
-    function renderWeatherPlaylist(main) {
-      const container = document.getElementById('weather-playlist');
-      if (!container) return;
+async function loadWeatherPlaylist(weatherKey) {
+    if (!currentUserId) return;
 
-      const key = resolveWeatherKey(main || 'Default');
-      const playlistId = WEATHER_SPOTIFY_EMBEDS[key] || WEATHER_SPOTIFY_EMBEDS['Default'];
-      if (!playlistId) {
-        container.innerHTML = `<div class="muted">この天気のプレイリストが設定されていません。</div>`;
-        return;
-      }
+    const iframe = document.getElementById("playlist-frame");
+    if (!iframe) return;
 
-      const src = `https://open.spotify.com/embed/playlist/${encodeURIComponent(playlistId)}?utm_source=generator`;
+    try {
+        const res = await fetch(
+            `/api/weather-playlist/random?uid=${encodeURIComponent(currentUserId)}&weather=${encodeURIComponent(weatherKey)}`
+        );
 
-      container.innerHTML = `
-        <div class="playlist-card">
-          <h4>天気に合わせたSpotifyプレイリスト</h4>
-          <p class="muted" style="font-size:14px;margin-bottom:12px;">
-            下のSpotifyプレイヤーから直接再生できます。
-          </p>
-          <iframe
-            id="playlist-frame"
-            style="border-radius:12px"
-            src="${src}"
-            width="100%"
-            height="352"
-            frameborder="0"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-            loading="lazy">
-          </iframe>
-        </div>
-      `;
+        if (!res.ok) return;
 
-      updateCurrentTrackLabel(`Spotifyプレイリスト（${key}）`);
+        const json = await res.json();
+        if (!json.found) {
+            console.log("DB未登録 → デフォルトのまま");
+            return;
+        }
+
+        iframe.src =
+            `https://open.spotify.com/embed/playlist/${json.playlist.playlist_id}`;
+
+        console.log("DB反映:", weatherKey, json.playlist.playlist_id);
+
+    } catch (e) {
+        console.error("loadWeatherPlaylist error", e);
     }
+}
+
 
     function ensureLocalVolume(player, slider) {
       if (!player) return;
@@ -308,15 +303,14 @@ area.innerHTML = `
 
 // ★ ここが重要：DB → fallback の順
 
+// ★ DB 用キーに変換
+const dbWeatherKey = weatherToDbKey(main);
 
-        // ① まず必ず iframe を作る（fallback含む）
+// ① iframe を必ず生成（Spotify公式 or デフォルト）
 renderWeatherPlaylist(main);
 
-// ② 次に DB があれば iframe.src を上書き
-await loadWeatherPlaylist(main);
-
-// ③ 演出
-setWeatherAnimation(main);
+// ② DBに登録があれば iframe を上書き（ランダム）
+await loadWeatherPlaylist(dbWeatherKey);
 
 
       } catch (e) {
@@ -793,9 +787,6 @@ setWeatherAnimation(main);
 
                 if (json.ok) {
                     console.log("登録成功 → 表示更新");
-
-                    // ここが超重要
-                    await loadWeatherPlaylist(w);
                 } else {
                     alert("登録に失敗しました");
                 }
@@ -918,6 +909,24 @@ function renderWeatherPlaylistFromDB(weather, playlistId) {
         </iframe>
       </div>
     `;
+}
+
+
+    function weatherToDbKey(main) {
+    switch (main) {
+        case "Clear":
+            return "sunny";
+        case "Clouds":
+            return "cloudy";
+        case "Rain":
+        case "Drizzle":
+        case "Thunderstorm":
+            return "rainy";
+        case "Snow":
+            return "snowy";
+        default:
+            return "default";
+    }
 }
 
 
