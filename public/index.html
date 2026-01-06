@@ -860,49 +860,78 @@
 
         // ページ読み込み時に更新
         //updateNavLoginButton();
-        function addWeatherBtn(card, pl) {
-            ["sunny", "cloudy"].forEach(w => {
-                const b = document.createElement("button");
-                b.textContent = w === "sunny" ? "晴れ用に登録" : "曇り用に登録";
+       function addWeatherBtn(card, pl) {
+    const weathers = [
+        { key: "sunny", label: "晴れ用に登録" },
+        { key: "cloudy", label: "曇り用に登録" },
+        { key: "rainy", label: "雨用に登録" }
+    ];
 
-                b.onclick = async () => {
+    weathers.forEach(w => {
+        const b = document.createElement("button");
+        b.textContent = w.label;
+        // リスト詳しく見るボタン風スタイル
+        b.style.border = "1px solid #333";
+        b.style.background = "transparent";
+        b.style.color = "#e6eef3";
+        b.style.borderRadius = "8px";
+        b.style.padding = "6px 10px";
+        b.style.cursor = "pointer";
 
-                    if (!currentUserId) {
-                        alert("Spotifyにログインしてください");
-                        return;
-                    }
+        // 登録済みチェック用
+        const checkRegistered = async () => {
+            try {
+                const res = await fetch(`/api/weather-playlist/check?uid=${currentUserId}&pid=${pl.id}&weather=${w.key}`);
+                const json = await res.json();
+                if (json.registered) {
+                    b.textContent = `${w.label.replace("に登録","")}に登録済み`;
+                    b.disabled = true; // ボタンを押せなくする
+                }
+            } catch (e) {
+                console.error("登録チェックエラー", e);
+            }
+        };
 
-                    console.log(`${pl.name} を ${w} に登録`);
+        checkRegistered(); // 初回チェック
 
-                    try {
-                        const res = await fetch("/api/weather-playlist/add", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                uid: currentUserId,
-                                weather: w,
-                                pid: pl.id,
-                                title: pl.name
-                            })
-                        });
+        b.onclick = async () => {
+            if (!currentUserId) {
+                alert("Spotifyにログインしてください");
+                return;
+            }
 
-                        const json = await res.json();
-                        console.log(json.message);
+            console.log(`${pl.name} を ${w.key} に登録`);
 
-                        if (json.ok) {
-                            console.log("登録成功 → 表示更新");
-                        } else {
-                            alert("登録に失敗しました");
-                        }
+            try {
+                const res = await fetch("/api/weather-playlist/add", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        uid: currentUserId,
+                        weather: w.key,
+                        pid: pl.id,
+                        title: pl.name
+                    })
+                });
 
-                    } catch (e) {
-                        console.error("登録エラー", e);
-                    }
-                };
+                const json = await res.json();
+                console.log(json.message);
 
-                card.appendChild(b);
-            });
-        }
+                if (json.ok) {
+                    b.textContent = `${w.label.replace("に登録","")}に登録済み`;
+                    b.disabled = true;
+                } else {
+                    alert("登録に失敗しました");
+                }
+
+            } catch (e) {
+                console.error("登録エラー", e);
+            }
+        };
+
+        card.appendChild(b);
+    });
+}
 
 
 
