@@ -309,25 +309,30 @@ area.innerHTML = `
 // ★ ここが重要：DB → fallback の順
 
 
-        used = await renderWeatherPlaylistFromDB(main);
-        if (!used) {
-          renderWeatherPlaylist(main);
-        }
-        
-        setWeatherAnimation(main);
+        // ① まず必ず iframe を作る（fallback含む）
+renderWeatherPlaylist(main);
+
+// ② 次に DB があれば iframe.src を上書き
+await loadWeatherPlaylist(main);
+
+// ③ 演出
+setWeatherAnimation(main);
+
 
       } catch (e) {
-        console.error('[weather] error:', e);
-        if (area) area.innerHTML = `<p>天気情報の取得に失敗しました。</p>`;
-        window.__WEATHER_MAIN__ = 'Default';
-        
-        used = await renderWeatherPlaylistFromDB('Default');
-        if (!used) {
-          renderWeatherPlaylist('Default');
-        }
-        
-        setWeatherAnimation('Default');
-      }
+       console.error('[weather] error:', e);
+      if (area) area.innerHTML = `<p>天気情報の取得に失敗しました。</p>`;
+      window.__WEATHER_MAIN__ = 'Default';
+      
+      // ① iframe を作る
+      renderWeatherPlaylist('Default');
+      
+      // ② DB があれば上書き
+      await loadWeatherPlaylist('Default');
+      
+      // ③ 演出
+      setWeatherAnimation('Default');
+
     }
 
     window.onload = () => {
@@ -894,19 +899,24 @@ async function loadWeatherPlaylist(weather) {
         const json = await res.json();
 
         if (!json.found) {
-            console.log("未登録のためデフォルト表示");
-            return false;
+            console.log("DB未登録 → デフォルトのまま");
+            return;
         }
 
-        // ★ iframeを直接探さない
-        renderWeatherPlaylistFromDB(weather, json.playlist.playlist_id);
+        // ★ iframe は「既に存在している前提」
+        const iframe = document.getElementById("playlist-frame");
+        if (!iframe) {
+            console.warn("iframe 未生成 → 後で再試行");
+            return;
+        }
 
-        console.log("DBプレイリスト表示:", json.playlist.playlist_id);
-        return true;
+        iframe.src =
+          `https://open.spotify.com/embed/playlist/${json.playlist.playlist_id}`;
+
+        console.log("iframe 更新:", json.playlist.playlist_id);
 
     } catch (e) {
         console.error("loadWeatherPlaylist error", e);
-        return false;
     }
 }
 
