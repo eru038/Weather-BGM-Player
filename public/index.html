@@ -895,15 +895,23 @@
         let isReg = false;
 
         const btn = document.createElement("button");
+
+        // 「リスト詳しく見る」と同じ見た目
+        btn.style.border = "1px solid #333";
+        btn.style.background = "transparent";
+        btn.style.color = "#e6eef3";
+        btn.style.borderRadius = "8px";
+        btn.style.padding = "6px 10px";
+        btn.style.cursor = "pointer";
+
         btn.textContent = "確認中...";
 
-        // 初期状態：必ずDBを見る
+        // 初期状態：必ずDB参照
         try {
             if (currentUserId) {
                 const res = await fetch(
                     `/api/weather-playlist/check?uid=${encodeURIComponent(currentUserId)}&weather=${encodeURIComponent(w)}&pid=${encodeURIComponent(pl.id)}`
                 );
-
                 const json = await res.json();
                 isReg = !!json.registered;
             }
@@ -938,10 +946,8 @@
                             title: pl.name
                         })
                     });
-
                     const json = await res.json();
                     if (!json.ok) throw new Error("add failed");
-
                     isReg = true;
                 } else {
                     // 解除
@@ -954,10 +960,8 @@
                             pid: pl.id
                         })
                     });
-
                     const json = await res.json();
                     if (!json.ok) throw new Error("remove failed");
-
                     isReg = false;
                 }
 
@@ -969,9 +973,13 @@
             }
         };
 
+        // 既存ボタン群の横に並ぶよう少し余白
+        btn.style.marginTop = "8px";
+
         card.appendChild(btn);
     });
 }
+
 
 
 
