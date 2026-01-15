@@ -278,11 +278,6 @@
             </div>
           `;
                     setupColorPicker(); initControls();
-                    const colorInput = document.getElementById('color-input');
-                    const playlistWrapper = document.getElementById('playlist-wrapper');
-                    colorInput.addEventListener('input', (e) => {
-                        if (playlistWrapper) playlistWrapper.style.background = e.target.value;
-                    });
                 }
                 content.classList.remove("fade-out");
             }, 400);
@@ -663,72 +658,38 @@
                 if (openUrl) setLastOpenUrl(openUrl);
             }
         }
-        async function getLocationWithFallback() {
-            // ① ブラウザの位置情報APIを最優先
-            if ("geolocation" in navigator) {
-                try {
-                    const pos = await new Promise((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, {
-                            enableHighAccuracy: false,
-                            timeout: 5000,
-                            maximumAge: 600000
-                        });
-                    });
-        
-                    return {
-                        lat: pos.coords.latitude,
-                        lon: pos.coords.longitude,
-                        city: null,
-                        source: "browser"
-                    };
-                } catch (e) {
-                    console.warn("[geo] browser geolocation failed:", e);
-                }
-            }
-        
-            // ② 位置情報が取れなければ東京にフォールバック
+
+       async function getLocationWithFallback() {
+    // ① ブラウザの位置情報APIを最優先
+    if ("geolocation" in navigator) {
+        try {
+            const pos = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: false,
+                    timeout: 5000,
+                    maximumAge: 600000
+                });
+            });
+
             return {
-                lat: 35.681236,
-                lon: 139.767125,
-                city: "東京(デフォルト)",
-                source: "default"
+                lat: pos.coords.latitude,
+                lon: pos.coords.longitude,
+                city: null,
+                source: "browser"
             };
+        } catch (e) {
+            console.warn("[geo] browser geolocation failed:", e);
         }
+    }
 
-        // async function getLocationWithFallback() {
-        //     // ① まず ipapi から位置情報を取得（IPベース）
-        //     try {
-        //         const resp = await fetch('https://ipapi.co/json/');
-        //         if (!resp.ok) {
-        //             console.warn('[geo] ipapi status:', resp.status);
-        //             throw new Error('ipapi status ' + resp.status);
-        //         }
-
-        //         const j = await resp.json();
-        //         // ipapi は latitude / longitude / city を返してくれる
-        //         if (j && typeof j.latitude === 'number' && typeof j.longitude === 'number') {
-        //             return {
-        //                 lat: j.latitude,
-        //                 lon: j.longitude,
-        //                 city: j.city || null,
-        //                 source: 'ipapi'
-        //             };
-        //         }
-
-        //         throw new Error('ipapi response missing lat/lon');
-        //     } catch (e) {
-        //         console.warn('[geo] ipapi error, fallback to default Tokyo:', e);
-
-        //         // ② ipapi がダメだった場合は東京駅付近をデフォルトにする
-        //         return {
-        //             lat: 35.681236,
-        //             lon: 139.767125,
-        //             city: '東京(デフォルト)',
-        //             source: 'default'
-        //         };
-        //     }
-        // }
-
+    // ② 位置情報が取れなければ東京にフォールバック
+    return {
+        lat: 35.681236,
+        lon: 139.767125,
+        city: "東京(デフォルト)",
+        source: "default"
+    };
+}
 
         async function renderUserPlaylists() {
             const grid = document.getElementById('playlists');
@@ -904,73 +865,78 @@
 
         // ページ読み込み時に更新
         //updateNavLoginButton();
-      async function addWeatherBtn(card, pl) {
-    const weathers = ["sunny", "cloudy", "rainy"];
+       function addWeatherBtn(card, pl) {
+    const weathers = [
+        { key: "sunny", label: "晴れ用に登録" },
+        { key: "cloudy", label: "曇り用に登録" },
+        { key: "rainy", label: "雨用に登録" }
+    ];
 
-    for (const w of weathers) {
+    weathers.forEach(w => {
         const b = document.createElement("button");
+        b.textContent = w.label;
+        // リスト詳しく見るボタン風スタイル
+        b.style.border = "1px solid #333";
+        b.style.background = "transparent";
+        b.style.color = "#e6eef3";
+        b.style.borderRadius = "8px";
+        b.style.padding = "6px 10px";
+        b.style.cursor = "pointer";
 
-        // 初期文字は「〇〇に登録」
-        b.textContent = w === "sunny" ? "晴れ用に登録" : w === "cloudy" ? "曇り用に登録" : "雨用に登録";
-        b.style.cssText = "border:1px solid #333;background:transparent;color:#e6eef3;border-radius:8px;padding:6px 10px;cursor:pointer;";
-
-        // 登録済みか確認して表示更新
-        try {
-            const res = await fetch(`/api/weather-playlist/check?uid=${currentUserId}&weather=${w}&pid=${pl.id}`);
-            const json = await res.json();
-            if (json.registered) {
-                b.textContent = "登録済み";
+        // 登録済みチェック用
+        const checkRegistered = async () => {
+            try {
+                const res = await fetch(`/api/weather-playlist/check?uid=${currentUserId}&pid=${pl.id}&weather=${w.key}`);
+                const json = await res.json();
+                if (json.registered) {
+                    b.textContent = `${w.label.replace("に登録","")}に登録済み`;
+                    b.disabled = true; // ボタンを押せなくする
+                }
+            } catch (e) {
+                console.error("登録チェックエラー", e);
             }
-        } catch (e) {
-            console.error("登録チェックエラー", e);
-        }
+        };
 
-        // ボタンクリック処理
+        checkRegistered(); // 初回チェック
+
         b.onclick = async () => {
             if (!currentUserId) {
                 alert("Spotifyにログインしてください");
                 return;
             }
 
+            console.log(`${pl.name} を ${w.key} に登録`);
+
             try {
-                if (b.textContent === "登録済み") {
-                    // 登録済みなら削除
-                    const res = await fetch("/api/weather-playlist/remove", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ uid: currentUserId, weather: w, pid: pl.id })
-                    });
-                    const json = await res.json();
-                    if (json.ok) {
-                        b.textContent = w === "sunny" ? "晴れ用に登録" : w === "cloudy" ? "曇り用に登録" : "雨用に登録";
-                        console.log("削除成功");
-                    } else {
-                        alert("削除に失敗しました");
-                    }
+                const res = await fetch("/api/weather-playlist/add", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        uid: currentUserId,
+                        weather: w.key,
+                        pid: pl.id,
+                        title: pl.name
+                    })
+                });
+
+                const json = await res.json();
+                console.log(json.message);
+
+                if (json.ok) {
+                    b.textContent = `${w.label.replace("に登録","")}に登録済み`;
+                    b.disabled = true;
                 } else {
-                    // 未登録なら追加
-                    const res = await fetch("/api/weather-playlist/add", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ uid: currentUserId, weather: w, pid: pl.id, title: pl.name })
-                    });
-                    const json = await res.json();
-                    if (json.ok) {
-                        b.textContent = "登録済み";
-                        console.log("登録成功");
-                    } else {
-                        alert("登録に失敗しました");
-                    }
+                    alert("登録に失敗しました");
                 }
+
             } catch (e) {
-                console.error("登録/削除エラー", e);
+                console.error("登録エラー", e);
             }
         };
 
         card.appendChild(b);
-    }
+    });
 }
-
 
 
 
@@ -1052,20 +1018,19 @@
                 `https://open.spotify.com/embed/playlist/${encodeURIComponent(playlistId)}`;
 
             container.innerHTML = `
-      <div class="playlist-card" id="playlist-wrapper" style="background:#1e1e1e; padding:12px; border-radius:12px;">
-  <h4>天気に合わせたSpotifyプレイリスト</h4>
-  <iframe
-    id="playlist-frame"
-    style="border-radius:12px"
-    src="${src}"
-    width="100%"
-    height="352"
-    frameborder="0"
-    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-    loading="lazy">
-  </iframe>
-</div>
-
+      <div class="playlist-card">
+        <h4>天気に合わせたSpotifyプレイリスト</h4>
+        <iframe
+          id="playlist-frame"
+          style="border-radius:12px"
+          src="${src}"
+          width="100%"
+          height="352"
+          frameborder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy">
+        </iframe>
+      </div>
     `;
         }
 
