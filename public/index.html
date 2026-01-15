@@ -897,7 +897,7 @@
         const btn = document.createElement("button");
         btn.textContent = "確認中...";
 
-        // 初期状態チェック
+        // 初期状態：必ずDBを見る
         try {
             if (currentUserId) {
                 const res = await fetch(
