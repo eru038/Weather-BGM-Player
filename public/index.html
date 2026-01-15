@@ -475,21 +475,37 @@
 
         async function fetchAccessToken() { const r = await fetch('/token', { credentials: 'include' }); if (!r.ok) return null; const j = await r.json(); return j.access_token; }
         async function ensureLoggedIn() {
-            try {
-                const me = await api('/me');
+    // アクセストークンがあるかだけを見る
+    if (!ACCESS_TOKEN) {
+        currentUserId = null;
+        IS_PREMIUM = false;
 
-                currentUserId = me.id;
+        // トークンが無い = 未ログイン
+        return false;
+    }
 
-                console.log("login user:", currentUserId, "premium:", IS_PREMIUM);
+    try {
+        const me = await api('/me');
+        currentUserId = me.id;
 
-                return true;
-            } catch (e) {
-                console.warn("not logged in", e);
-                currentUserId = null;
-                IS_PREMIUM = false;
-                return false;
-            }
-        }
+        // premium 判定（取得できた場合のみ）
+        IS_PREMIUM = me.product === 'premium';
+
+        console.log("login user:", currentUserId, "premium:", IS_PREMIUM);
+    } catch (e) {
+        // /me 失敗してもログイン自体は成功扱い
+        console.warn("/me failed, but token exists", e);
+
+        currentUserId = null;
+        IS_PREMIUM = false;
+
+        // ここで false を返してはいけない
+        // なぜならプレイリスト取得は可能なため
+    }
+
+    return true;
+}
+
 
         async function isPremiumUser() { return IS_PREMIUM; }
         function setLastOpenUrl(url) {
@@ -540,36 +556,47 @@
             }
         }
         async function initControls() {
-            const info = document.getElementById('user-info');
-            const logged = await ensureLoggedIn();
+    const info = document.getElementById('user-info');
+    const logged = await ensureLoggedIn();
 
-            if (!logged) {
-                if (info) info.textContent = '';
-                setControlsDisabled(false);
-                const a = document.getElementById('open-in-spotify'); const h = document.getElementById('premium-hint');
-                if (a) a.style.display = 'none'; if (h) h.style.display = 'none';
-                return;
-            }
+    if (!logged) {
+        if (info) info.textContent = '';
 
-            try {
-                const me = await api('/me');
-                if (info) info.textContent = `🎧 ${me.display_name || me.id}`;
-                if (window.__CURRENT_PAGE__ === 'settings') {
-                    const btn = document.querySelector('.spotify-btn');
-                    if (btn) btn.textContent = `Spotify 連携済み（${me.display_name || me.id}）`;
-                }
-            } catch { }
+        setControlsDisabled(false);
 
-            if (IS_PREMIUM) {
-                setControlsDisabled(false);
-                const a = document.getElementById('open-in-spotify'); const h = document.getElementById('premium-hint');
-                if (a) a.style.display = 'none'; if (h) h.style.display = 'none';
-            } else {
-                setControlsDisabled(false);
-                const h = document.getElementById('premium-hint'); if (h) h.style.display = 'inline';
-                if (LAST_OPEN_URL) { const a = document.getElementById('open-in-spotify'); if (a) { a.style.display = 'inline'; a.href = LAST_OPEN_URL; } }
+        const a = document.getElementById('open-in-spotify');
+        const h = document.getElementById('premium-hint');
+
+        if (a) a.style.display = 'none';
+        if (h) h.style.display = 'none';
+
+        return;
+    }
+
+    // ここから先は「ログイン済み」前提で必ず実行される
+
+    try {
+        const me = await api('/me');
+
+        if (info) {
+            info.textContent = `🎧 ${me.display_name || me.id}`;
+        }
+
+        if (window.__CURRENT_PAGE__ === 'settings') {
+            const btn = document.querySelector('.spotify-btn');
+            if (btn) {
+                btn.textContent = `Spotify 連携済み（${me.display_name || me.id}）`;
             }
         }
+    } catch (e) {
+        // ユーザー情報が取れないだけ
+        // プレイリストや再生処理は止めない
+        console.warn("user info not available", e);
+
+        if (info) info.textContent = '🎧 Spotify 連携済み';
+    }
+}
+
 
         
 
