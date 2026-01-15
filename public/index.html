@@ -868,78 +868,73 @@
 
         // ページ読み込み時に更新
         //updateNavLoginButton();
-       function addWeatherBtn(card, pl) {
-    const weathers = [
-        { key: "sunny", label: "晴れ用に登録" },
-        { key: "cloudy", label: "曇り用に登録" },
-        { key: "rainy", label: "雨用に登録" }
-    ];
+      async function addWeatherBtn(card, pl) {
+    const weathers = ["sunny", "cloudy", "rainy"];
 
-    weathers.forEach(w => {
+    for (const w of weathers) {
         const b = document.createElement("button");
-        b.textContent = w.label;
-        // リスト詳しく見るボタン風スタイル
-        b.style.border = "1px solid #333";
-        b.style.background = "transparent";
-        b.style.color = "#e6eef3";
-        b.style.borderRadius = "8px";
-        b.style.padding = "6px 10px";
-        b.style.cursor = "pointer";
 
-        // 登録済みチェック用
-        const checkRegistered = async () => {
-            try {
-                const res = await fetch(`/api/weather-playlist/check?uid=${currentUserId}&pid=${pl.id}&weather=${w.key}`);
-                const json = await res.json();
-                if (json.registered) {
-                    b.textContent = `${w.label.replace("に登録","")}に登録済み`;
-                    b.disabled = true; // ボタンを押せなくする
-                }
-            } catch (e) {
-                console.error("登録チェックエラー", e);
+        // 初期文字は「〇〇に登録」
+        b.textContent = w === "sunny" ? "晴れ用に登録" : w === "cloudy" ? "曇り用に登録" : "雨用に登録";
+        b.style.cssText = "border:1px solid #333;background:transparent;color:#e6eef3;border-radius:8px;padding:6px 10px;cursor:pointer;";
+
+        // 登録済みか確認して表示更新
+        try {
+            const res = await fetch(`/api/weather-playlist/check?uid=${currentUserId}&weather=${w}&pid=${pl.id}`);
+            const json = await res.json();
+            if (json.registered) {
+                b.textContent = "登録済み";
             }
-        };
+        } catch (e) {
+            console.error("登録チェックエラー", e);
+        }
 
-        checkRegistered(); // 初回チェック
-
+        // ボタンクリック処理
         b.onclick = async () => {
             if (!currentUserId) {
                 alert("Spotifyにログインしてください");
                 return;
             }
 
-            console.log(`${pl.name} を ${w.key} に登録`);
-
             try {
-                const res = await fetch("/api/weather-playlist/add", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        uid: currentUserId,
-                        weather: w.key,
-                        pid: pl.id,
-                        title: pl.name
-                    })
-                });
-
-                const json = await res.json();
-                console.log(json.message);
-
-                if (json.ok) {
-                    b.textContent = `${w.label.replace("に登録","")}に登録済み`;
-                    b.disabled = true;
+                if (b.textContent === "登録済み") {
+                    // 登録済みなら削除
+                    const res = await fetch("/api/weather-playlist/remove", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ uid: currentUserId, weather: w, pid: pl.id })
+                    });
+                    const json = await res.json();
+                    if (json.ok) {
+                        b.textContent = w === "sunny" ? "晴れ用に登録" : w === "cloudy" ? "曇り用に登録" : "雨用に登録";
+                        console.log("削除成功");
+                    } else {
+                        alert("削除に失敗しました");
+                    }
                 } else {
-                    alert("登録に失敗しました");
+                    // 未登録なら追加
+                    const res = await fetch("/api/weather-playlist/add", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ uid: currentUserId, weather: w, pid: pl.id, title: pl.name })
+                    });
+                    const json = await res.json();
+                    if (json.ok) {
+                        b.textContent = "登録済み";
+                        console.log("登録成功");
+                    } else {
+                        alert("登録に失敗しました");
+                    }
                 }
-
             } catch (e) {
-                console.error("登録エラー", e);
+                console.error("登録/削除エラー", e);
             }
         };
 
         card.appendChild(b);
-    });
+    }
 }
+
 
 
 
