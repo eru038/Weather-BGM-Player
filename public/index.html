@@ -278,6 +278,11 @@
             </div>
           `;
                     setupColorPicker(); initControls();
+                    const colorInput = document.getElementById('color-input');
+                    const playlistWrapper = document.getElementById('playlist-wrapper');
+                    colorInput.addEventListener('input', (e) => {
+                        if (playlistWrapper) playlistWrapper.style.background = e.target.value;
+                    });
                 }
                 content.classList.remove("fade-out");
             }, 400);
@@ -1016,19 +1021,20 @@
                 `https://open.spotify.com/embed/playlist/${encodeURIComponent(playlistId)}`;
 
             container.innerHTML = `
-      <div class="playlist-card">
-        <h4>天気に合わせたSpotifyプレイリスト</h4>
-        <iframe
-          id="playlist-frame"
-          style="border-radius:12px"
-          src="${src}"
-          width="100%"
-          height="352"
-          frameborder="0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy">
-        </iframe>
-      </div>
+      <div class="playlist-card" id="playlist-wrapper" style="background:#1e1e1e; padding:12px; border-radius:12px;">
+  <h4>天気に合わせたSpotifyプレイリスト</h4>
+  <iframe
+    id="playlist-frame"
+    style="border-radius:12px"
+    src="${src}"
+    width="100%"
+    height="352"
+    frameborder="0"
+    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+    loading="lazy">
+  </iframe>
+</div>
+
     `;
         }
 
