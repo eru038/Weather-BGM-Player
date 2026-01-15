@@ -248,7 +248,9 @@
                     content.innerHTML = `
             <h1>Weather BGM Player</h1>
             <div id="weather-area"></div>
-            <div style="margin-top:16px;"></div>
+            <div style="margin-top:16px;">
+              <button class="spotify-btn" onclick="playWeatherOnSpotify()">在 Spotify 播放 天気BGM</button>
+            </div>
             
             <div id="weather-playlist" style="margin-top:24px;"></div>
             
@@ -278,11 +280,6 @@
             </div>
           `;
                     setupColorPicker(); initControls();
-                    const colorInput = document.getElementById('color-input');
-                    const playlistWrapper = document.getElementById('playlist-wrapper');
-                    colorInput.addEventListener('input', (e) => {
-                        if (playlistWrapper) playlistWrapper.style.background = e.target.value;
-                    });
                 }
                 content.classList.remove("fade-out");
             }, 400);
@@ -301,6 +298,35 @@
             label.textContent = text || '';
         }
 
+        // ★ここを「自作BGMリスト」→「Spotify埋め込みプレーヤー表示」に変更
+        async function loadWeatherPlaylist(weatherKey) {
+            if (!currentUserId) return;
+
+            const iframe = document.getElementById("playlist-frame");
+            if (!iframe) return;
+
+            try {
+                const res = await fetch(
+                    `/api/weather-playlist/random?uid=${encodeURIComponent(currentUserId)}&weather=${encodeURIComponent(weatherKey)}`
+                );
+
+                if (!res.ok) return;
+
+                const json = await res.json();
+                if (!json.found) {
+                    console.log("DB未登録 → デフォルトのまま");
+                    return;
+                }
+
+                iframe.src =
+                    `https://open.spotify.com/embed/playlist/${json.playlist.playlist_id}`;
+
+                console.log("DB反映:", weatherKey, json.playlist.playlist_id);
+
+            } catch (e) {
+                console.error("loadWeatherPlaylist error", e);
+            }
+        }
 
 
         function ensureLocalVolume(player, slider) {
@@ -807,46 +833,36 @@
         }
 
         async function renderTracksForPlaylist(playlistId, cardEl, panelEl) {
-    if (!panelEl) return;
-    panelEl.innerHTML = `<div style="opacity:.8;">曲目読み込み中...</div>`;
-
-    try {
-        let items = [];
-        let url = `/playlist/${encodeURIComponent(playlistId)}/tracks?limit=100`;
-
-        // ページングで全曲取得
-        while (url) {
-            const data = await api(url);
-            if (data.items) items.push(...data.items);
-            url = data.next; // next が null になるまでループ
-        }
-
-        if (!items.length) {
-            panelEl.innerHTML = `<div style="opacity:.8;">曲目がありません。</div>`;
-            return;
-        }
-
-        panelEl.innerHTML = `
-            <h3 style="margin-top:12px;">曲目（全 ${items.length} 曲）</h3>
-            <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px;">
-                ${items.map((t, i) => `
-                    <div style="display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.25);border:1px solid #222;border-radius:10px;padding:8px;">
-                        <div style="width:40px;text-align:right;opacity:.7;">${i + 1}</div>
-                        ${t.image ? `<img src="${t.image}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<div style="width:40px;height:40px;background:#222;border-radius:6px;"></div>`}
-                        <div style="flex:1;min-width:0;">
-                            <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(t.name)}</div>
-                            <div style="opacity:.8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml((t.artists || []).join(', '))}</div>
-                        </div>
-                        <button onclick="openTrackExternally('${t.external_url || ''}')" style="border:1px solid #333;background:transparent;color:#e6eef3;border-radius:8px;padding:6px 10px;cursor:pointer;">再生</button>
-                    </div>
-                `).join('')}
-            </div>
+            if (!panelEl) return;
+            panelEl.innerHTML = `<div style="opacity:.8;">曲目読み込み中...</div>`;
+            try {
+                const data = await api(`/playlist/${encodeURIComponent(playlistId)}/tracks?limit=100`);
+                const items = data.items || [];
+                if (!items.length) {
+                    panelEl.innerHTML = `<div style="opacity:.8;">曲目がありません。</div>`;
+                    return;
+                }
+                panelEl.innerHTML = `
+          <h3 style="margin-top:12px;">曲目（トップ ${items.length} 曲）</h3>
+          <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px;">
+            ${items.map((t, i) => `
+              <div style="display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.25);border:1px solid #222;border-radius:10px;padding:8px;">
+                <div style="width:40px;text-align:right;opacity:.7;">${i + 1}</div>
+                ${t.image ? `<img src="${t.image}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<div style="width:40px;height:40px;background:#222;border-radius:6px;"></div>`}
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(t.name)}</div>
+                  <div style="opacity:.8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml((t.artists || []).join(', '))}</div>
+                </div>
+                <button onclick="openTrackExternally('${t.external_url || ''}')" style="border:1px solid #333;background:transparent;color:#e6eef3;border-radius:8px;padding:6px 10px;cursor:pointer;">再生</button>
+              </div>
+            `).join('')}
+          </div>
         `;
-    } catch (e) {
-        console.error('renderTracksForPlaylist error', e);
-        panelEl.innerHTML = `<div style="opacity:.8;">曲目の取得に失敗しました。</div>`;
-    }
-}
+            } catch (e) {
+                console.error('renderTracksForPlaylist error', e);
+                panelEl.innerHTML = `<div style="opacity:.8;">曲目の取得に失敗しました。</div>`;
+            }
+        }
 
         function openTrackExternally(url) {
             if (!url) return;
@@ -873,75 +889,90 @@
 
         // ページ読み込み時に更新
         //updateNavLoginButton();
-      async function addWeatherBtn(card, pl) {
-    const weathers = ["sunny", "cloudy", "rainy"];
+        function addWeatherBtn(card, pl) {
+            ["sunny", "cloudy"].forEach(w => {
+                const b = document.createElement("button");
+                b.textContent = w === "sunny" ? "晴れ用に登録" : "曇り用に登録";
 
-    for (const w of weathers) {
-        const b = document.createElement("button");
+                b.onclick = async () => {
 
-        // 初期文字は「〇〇に登録」
-        b.textContent = w === "sunny" ? "晴れ用に登録" : w === "cloudy" ? "曇り用に登録" : "雨用に登録";
-        b.style.cssText = "border:1px solid #333;background:transparent;color:#e6eef3;border-radius:8px;padding:6px 10px;cursor:pointer;";
+                    if (!currentUserId) {
+                        alert("Spotifyにログインしてください");
+                        return;
+                    }
 
-        // 登録済みか確認して表示更新
-        try {
-            const res = await fetch(`/api/weather-playlist/check?uid=${currentUserId}&weather=${w}&pid=${pl.id}`);
-            const json = await res.json();
-            if (json.registered) {
-                b.textContent = "登録済み";
-            }
-        } catch (e) {
-            console.error("登録チェックエラー", e);
+                    console.log(`${pl.name} を ${w} に登録`);
+
+                    try {
+                        const res = await fetch("/api/weather-playlist/add", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                uid: currentUserId,
+                                weather: w,
+                                pid: pl.id,
+                                title: pl.name
+                            })
+                        });
+
+                        const json = await res.json();
+                        console.log(json.message);
+
+                        if (json.ok) {
+                            console.log("登録成功 → 表示更新");
+                        } else {
+                            alert("登録に失敗しました");
+                        }
+
+                    } catch (e) {
+                        console.error("登録エラー", e);
+                    }
+                };
+
+                card.appendChild(b);
+            });
         }
 
-        // ボタンクリック処理
-        b.onclick = async () => {
-            if (!currentUserId) {
-                alert("Spotifyにログインしてください");
+
+
+        async function playByWeather(weather) {
+            const res = await fetch(
+                `/api/weather-playlist/random?uid=${currentUserId}&weather=${weather}`
+            );
+            const data = await res.json();
+
+            if (data.found) {
+                renderPlaylistIframe(
+                    data.playlist.playlist_id,
+                    data.playlist.title
+                );
                 return;
             }
 
-            try {
-                if (b.textContent === "登録済み") {
-                    // 登録済みなら削除
-                    const res = await fetch("/api/weather-playlist/remove", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ uid: currentUserId, weather: w, pid: pl.id })
-                    });
-                    const json = await res.json();
-                    if (json.ok) {
-                        b.textContent = w === "sunny" ? "晴れ用に登録" : w === "cloudy" ? "曇り用に登録" : "雨用に登録";
-                        console.log("削除成功");
-                    } else {
-                        alert("削除に失敗しました");
-                    }
-                } else {
-                    // 未登録なら追加
-                    const res = await fetch("/api/weather-playlist/add", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ uid: currentUserId, weather: w, pid: pl.id, title: pl.name })
-                    });
-                    const json = await res.json();
-                    if (json.ok) {
-                        b.textContent = "登録済み";
-                        console.log("登録成功");
-                    } else {
-                        alert("登録に失敗しました");
-                    }
-                }
-            } catch (e) {
-                console.error("登録/削除エラー", e);
-            }
-        };
-
-        card.appendChild(b);
-    }
-}
+            await createWeatherPlaylistIframe(weather);
+        }
 
 
 
+
+
+        function renderPlaylistIframe(pid, title = null) {
+            const area = document.getElementById("weather-player");
+            if (!area) return;
+
+            area.innerHTML = `
+            ${title ? `<h3>${title}</h3>` : ""}
+            <iframe
+                style="border-radius:12px"
+                src="https://open.spotify.com/embed/playlist/${pid}"
+                width="100%"
+                height="380"
+                frameborder="0"
+                allow="encrypted-media"
+                loading="lazy">
+            </iframe>
+            `;
+        }
 
 
 
@@ -986,6 +1017,34 @@
         }
 
 
+
+
+
+        function renderWeatherPlaylistFromDB(weather, playlistId) {
+            const container = document.getElementById("weather-playlist");
+            if (!container) return;
+
+            const src =
+                `https://open.spotify.com/embed/playlist/${encodeURIComponent(playlistId)}`;
+
+            container.innerHTML = `
+      <div class="playlist-card">
+        <h4>あなたが登録したプレイリスト</h4>
+        <iframe
+          id="playlist-frame"
+          style="border-radius:12px"
+          src="${src}"
+          width="100%"
+          height="352"
+          frameborder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy">
+        </iframe>
+      </div>
+    `;
+        }
+
+
         function weatherToDbKey(main) {
             switch (main) {
                 case "Clear":
@@ -1021,20 +1080,19 @@
                 `https://open.spotify.com/embed/playlist/${encodeURIComponent(playlistId)}`;
 
             container.innerHTML = `
-      <div class="playlist-card" id="playlist-wrapper" style="background:#1e1e1e; padding:12px; border-radius:12px;">
-  <h4>天気に合わせたSpotifyプレイリスト</h4>
-  <iframe
-    id="playlist-frame"
-    style="border-radius:12px"
-    src="${src}"
-    width="100%"
-    height="352"
-    frameborder="0"
-    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-    loading="lazy">
-  </iframe>
-</div>
-
+      <div class="playlist-card">
+        <h4>天気に合わせたSpotifyプレイリスト</h4>
+        <iframe
+          id="playlist-frame"
+          style="border-radius:12px"
+          src="${src}"
+          width="100%"
+          height="352"
+          frameborder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy">
+        </iframe>
+      </div>
     `;
         }
 
