@@ -248,7 +248,9 @@
                     content.innerHTML = `
             <h1>Weather BGM Player</h1>
             <div id="weather-area"></div>
-            <div style="margin-top:16px;"></div>
+            <div style="margin-top:16px;">
+              <button class="spotify-btn" onclick="playWeatherOnSpotify()">在 Spotify 播放 天気BGM</button>
+            </div>
             
             <div id="weather-playlist" style="margin-top:24px;"></div>
             
@@ -475,37 +477,22 @@
 
         async function fetchAccessToken() { const r = await fetch('/token', { credentials: 'include' }); if (!r.ok) return null; const j = await r.json(); return j.access_token; }
         async function ensureLoggedIn() {
-    // // アクセストークンがあるかだけを見る
-    // if (!ACCESS_TOKEN) {
-    //     currentUserId = null;
-    //     IS_PREMIUM = false;
+            try {
+                const me = await api('/me');
 
-    //     // トークンが無い = 未ログイン
-    //     return false;
-    // }
+                currentUserId = me.id;
+                IS_PREMIUM = (me.product === 'premium');
 
-    try {
-        const me = await api('/me');
-        currentUserId = me.id;
+                console.log("login user:", currentUserId, "premium:", IS_PREMIUM);
 
-        // premium 判定（取得できた場合のみ）
-        IS_PREMIUM = me.product === 'premium';
-
-        console.log("login user:", currentUserId, "premium:", IS_PREMIUM);
-    } catch (e) {
-        // /me 失敗してもログイン自体は成功扱い
-        console.warn("/me failed, but token exists", e);
-
-        currentUserId = null;
-        IS_PREMIUM = false;
-
-        // ここで false を返してはいけない
-        // なぜならプレイリスト取得は可能なため
-    }
-
-    return true;
-}
-
+                return true;
+            } catch (e) {
+                console.warn("not logged in", e);
+                currentUserId = null;
+                IS_PREMIUM = false;
+                return false;
+            }
+        }
 
         async function isPremiumUser() { return IS_PREMIUM; }
         function setLastOpenUrl(url) {
@@ -556,49 +543,52 @@
             }
         }
         async function initControls() {
-    const info = document.getElementById('user-info');
-    const logged = await ensureLoggedIn();
+            const info = document.getElementById('user-info');
+            const logged = await ensureLoggedIn();
 
-    if (!logged) {
-        if (info) info.textContent = '';
+            if (!logged) {
+                if (info) info.textContent = '';
+                setControlsDisabled(false);
+                const a = document.getElementById('open-in-spotify'); const h = document.getElementById('premium-hint');
+                if (a) a.style.display = 'none'; if (h) h.style.display = 'none';
+                return;
+            }
 
-        setControlsDisabled(false);
+            try {
+                const me = await api('/me');
+                if (info) info.textContent = `🎧 ${me.display_name || me.id}`;
+                if (window.__CURRENT_PAGE__ === 'settings') {
+                    const btn = document.querySelector('.spotify-btn');
+                    if (btn) btn.textContent = `Spotify 連携済み（${me.display_name || me.id}）`;
+                }
+            } catch { }
 
-        const a = document.getElementById('open-in-spotify');
-        const h = document.getElementById('premium-hint');
-
-        if (a) a.style.display = 'none';
-        if (h) h.style.display = 'none';
-
-        return;
-    }
-
-    // ここから先は「ログイン済み」前提で必ず実行される
-
-    try {
-        const me = await api('/me');
-
-        if (info) {
-            info.textContent = `🎧 ${me.display_name || me.id}`;
-        }
-
-        if (window.__CURRENT_PAGE__ === 'settings') {
-            const btn = document.querySelector('.spotify-btn');
-            if (btn) {
-                btn.textContent = `Spotify 連携済み（${me.display_name || me.id}）`;
+            if (IS_PREMIUM) {
+                setControlsDisabled(false);
+                const a = document.getElementById('open-in-spotify'); const h = document.getElementById('premium-hint');
+                if (a) a.style.display = 'none'; if (h) h.style.display = 'none';
+            } else {
+                setControlsDisabled(false);
+                const h = document.getElementById('premium-hint'); if (h) h.style.display = 'inline';
+                if (LAST_OPEN_URL) { const a = document.getElementById('open-in-spotify'); if (a) { a.style.display = 'inline'; a.href = LAST_OPEN_URL; } }
             }
         }
-    } catch (e) {
-        // ユーザー情報が取れないだけ
-        // プレイリストや再生処理は止めない
-        console.warn("user info not available", e);
 
-        if (info) info.textContent = '🎧 Spotify 連携済み';
-    }
-}
-
-
-        
+        window.onSpotifyWebPlaybackSDKReady = async () => {
+            const token = await fetchAccessToken(); if (!token) return;
+            spotifyPlayer = new Spotify.Player({
+                name: 'Weather BGM (Web Player)',
+                getOAuthToken: async cb => { const t = await fetchAccessToken(); if (t) cb(t); },
+                volume: 0.5
+            });
+            spotifyPlayer.addListener('initialization_error', ({ message }) => console.error(message));
+            spotifyPlayer.addListener('authentication_error', ({ message }) => console.error(message));
+            spotifyPlayer.addListener('account_error', ({ message }) => console.error(message));
+            spotifyPlayer.addListener('playback_error', ({ message }) => console.error(message));
+            spotifyPlayer.addListener('ready', ({ device_id }) => { spotifyDeviceId = device_id; });
+            spotifyPlayer.addListener('not_ready', ({ device_id }) => { });
+            await spotifyPlayer.connect();
+        };
 
         const WEATHER_TO_QUERY = {
             'Clear': ['summer vibes', 'sunny chill', 'city pop'],
@@ -671,37 +661,40 @@
             }
         }
 
-       async function getLocationWithFallback() {
-    // ① ブラウザの位置情報APIを最優先
-    if ("geolocation" in navigator) {
-        try {
-            const pos = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, {
-                    enableHighAccuracy: false,
-                    timeout: 5000,
-                    maximumAge: 600000
-                });
-            });
+        async function getLocationWithFallback() {
+            // ① まず ipapi から位置情報を取得（IPベース）
+            try {
+                const resp = await fetch('https://ipapi.co/json/');
+                if (!resp.ok) {
+                    console.warn('[geo] ipapi status:', resp.status);
+                    throw new Error('ipapi status ' + resp.status);
+                }
 
-            return {
-                lat: pos.coords.latitude,
-                lon: pos.coords.longitude,
-                city: null,
-                source: "browser"
-            };
-        } catch (e) {
-            console.warn("[geo] browser geolocation failed:", e);
+                const j = await resp.json();
+                // ipapi は latitude / longitude / city を返してくれる
+                if (j && typeof j.latitude === 'number' && typeof j.longitude === 'number') {
+                    return {
+                        lat: j.latitude,
+                        lon: j.longitude,
+                        city: j.city || null,
+                        source: 'ipapi'
+                    };
+                }
+
+                throw new Error('ipapi response missing lat/lon');
+            } catch (e) {
+                console.warn('[geo] ipapi error, fallback to default Tokyo:', e);
+
+                // ② ipapi がダメだった場合は東京駅付近をデフォルトにする
+                return {
+                    lat: 35.681236,
+                    lon: 139.767125,
+                    city: '東京(デフォルト)',
+                    source: 'default'
+                };
+            }
         }
-    }
 
-    // ② 位置情報が取れなければ東京にフォールバック
-    return {
-        lat: 35.681236,
-        lon: 139.767125,
-        city: "東京(デフォルト)",
-        source: "default"
-    };
-}
 
         async function renderUserPlaylists() {
             const grid = document.getElementById('playlists');
@@ -811,46 +804,36 @@
         }
 
         async function renderTracksForPlaylist(playlistId, cardEl, panelEl) {
-    if (!panelEl) return;
-    panelEl.innerHTML = `<div style="opacity:.8;">曲目読み込み中...</div>`;
-
-    try {
-        let items = [];
-        let url = `/playlist/${encodeURIComponent(playlistId)}/tracks?limit=100`;
-
-        // ページングで全曲取得
-        while (url) {
-            const data = await api(url);
-            if (data.items) items.push(...data.items);
-            url = data.next; // next が null になるまでループ
-        }
-
-        if (!items.length) {
-            panelEl.innerHTML = `<div style="opacity:.8;">曲目がありません。</div>`;
-            return;
-        }
-
-        panelEl.innerHTML = `
-            <h3 style="margin-top:12px;">曲目（全 ${items.length} 曲）</h3>
-            <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px;">
-                ${items.map((t, i) => `
-                    <div style="display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.25);border:1px solid #222;border-radius:10px;padding:8px;">
-                        <div style="width:40px;text-align:right;opacity:.7;">${i + 1}</div>
-                        ${t.image ? `<img src="${t.image}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<div style="width:40px;height:40px;background:#222;border-radius:6px;"></div>`}
-                        <div style="flex:1;min-width:0;">
-                            <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(t.name)}</div>
-                            <div style="opacity:.8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml((t.artists || []).join(', '))}</div>
-                        </div>
-                        <button onclick="openTrackExternally('${t.external_url || ''}')" style="border:1px solid #333;background:transparent;color:#e6eef3;border-radius:8px;padding:6px 10px;cursor:pointer;">再生</button>
-                    </div>
-                `).join('')}
-            </div>
+            if (!panelEl) return;
+            panelEl.innerHTML = `<div style="opacity:.8;">曲目読み込み中...</div>`;
+            try {
+                const data = await api(`/playlist/${encodeURIComponent(playlistId)}/tracks?limit=100`);
+                const items = data.items || [];
+                if (!items.length) {
+                    panelEl.innerHTML = `<div style="opacity:.8;">曲目がありません。</div>`;
+                    return;
+                }
+                panelEl.innerHTML = `
+          <h3 style="margin-top:12px;">曲目（トップ ${items.length} 曲）</h3>
+          <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px;">
+            ${items.map((t, i) => `
+              <div style="display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.25);border:1px solid #222;border-radius:10px;padding:8px;">
+                <div style="width:40px;text-align:right;opacity:.7;">${i + 1}</div>
+                ${t.image ? `<img src="${t.image}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<div style="width:40px;height:40px;background:#222;border-radius:6px;"></div>`}
+                <div style="flex:1;min-width:0;">
+                  <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(t.name)}</div>
+                  <div style="opacity:.8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml((t.artists || []).join(', '))}</div>
+                </div>
+                <button onclick="openTrackExternally('${t.external_url || ''}')" style="border:1px solid #333;background:transparent;color:#e6eef3;border-radius:8px;padding:6px 10px;cursor:pointer;">再生</button>
+              </div>
+            `).join('')}
+          </div>
         `;
-    } catch (e) {
-        console.error('renderTracksForPlaylist error', e);
-        panelEl.innerHTML = `<div style="opacity:.8;">曲目の取得に失敗しました。</div>`;
-    }
-}
+            } catch (e) {
+                console.error('renderTracksForPlaylist error', e);
+                panelEl.innerHTML = `<div style="opacity:.8;">曲目の取得に失敗しました。</div>`;
+            }
+        }
 
         function openTrackExternally(url) {
             if (!url) return;
@@ -1047,11 +1030,6 @@
         }
 
 
-window.onSpotifyWebPlaybackSDKReady = () => {
-    console.log("Spotify Web Playback SDK ready");
-
-    // ここで Player を new Spotify.Player(...) する
-};
 
 
 
