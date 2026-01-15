@@ -663,40 +663,71 @@
                 if (openUrl) setLastOpenUrl(openUrl);
             }
         }
-
         async function getLocationWithFallback() {
-            // ① まず ipapi から位置情報を取得（IPベース）
-            try {
-                const resp = await fetch('https://ipapi.co/json/');
-                if (!resp.ok) {
-                    console.warn('[geo] ipapi status:', resp.status);
-                    throw new Error('ipapi status ' + resp.status);
-                }
-
-                const j = await resp.json();
-                // ipapi は latitude / longitude / city を返してくれる
-                if (j && typeof j.latitude === 'number' && typeof j.longitude === 'number') {
+            // ① ブラウザの位置情報APIを最優先
+            if ("geolocation" in navigator) {
+                try {
+                    const pos = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: false,
+                            timeout: 5000,
+                            maximumAge: 600000
+                        });
+                    });
+        
                     return {
-                        lat: j.latitude,
-                        lon: j.longitude,
-                        city: j.city || null,
-                        source: 'ipapi'
+                        lat: pos.coords.latitude,
+                        lon: pos.coords.longitude,
+                        city: null,
+                        source: "browser"
                     };
+                } catch (e) {
+                    console.warn("[geo] browser geolocation failed:", e);
                 }
-
-                throw new Error('ipapi response missing lat/lon');
-            } catch (e) {
-                console.warn('[geo] ipapi error, fallback to default Tokyo:', e);
-
-                // ② ipapi がダメだった場合は東京駅付近をデフォルトにする
-                return {
-                    lat: 35.681236,
-                    lon: 139.767125,
-                    city: '東京(デフォルト)',
-                    source: 'default'
-                };
             }
+        
+            // ② 位置情報が取れなければ東京にフォールバック
+            return {
+                lat: 35.681236,
+                lon: 139.767125,
+                city: "東京(デフォルト)",
+                source: "default"
+            };
         }
+
+        // async function getLocationWithFallback() {
+        //     // ① まず ipapi から位置情報を取得（IPベース）
+        //     try {
+        //         const resp = await fetch('https://ipapi.co/json/');
+        //         if (!resp.ok) {
+        //             console.warn('[geo] ipapi status:', resp.status);
+        //             throw new Error('ipapi status ' + resp.status);
+        //         }
+
+        //         const j = await resp.json();
+        //         // ipapi は latitude / longitude / city を返してくれる
+        //         if (j && typeof j.latitude === 'number' && typeof j.longitude === 'number') {
+        //             return {
+        //                 lat: j.latitude,
+        //                 lon: j.longitude,
+        //                 city: j.city || null,
+        //                 source: 'ipapi'
+        //             };
+        //         }
+
+        //         throw new Error('ipapi response missing lat/lon');
+        //     } catch (e) {
+        //         console.warn('[geo] ipapi error, fallback to default Tokyo:', e);
+
+        //         // ② ipapi がダメだった場合は東京駅付近をデフォルトにする
+        //         return {
+        //             lat: 35.681236,
+        //             lon: 139.767125,
+        //             city: '東京(デフォルト)',
+        //             source: 'default'
+        //         };
+        //     }
+        // }
 
 
         async function renderUserPlaylists() {
