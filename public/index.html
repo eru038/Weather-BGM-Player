@@ -1,129 +1,261 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Weather BGM Player</title>
-  <style>
-    :root { --accent: #1db954; }
-    body {
-      margin: 0; min-height: 100vh; display: flex;
-      background: linear-gradient(180deg, var(--accent) 0%, #0e0f12 60%);
-      color: #e6eef3; font-family: "Segoe UI", sans-serif; transition: background 0.6s ease;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weather BGM Player</title>
+    <style>
+        :root {
+            --accent: #1db954;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            background: linear-gradient(180deg, var(--accent) 0%, #0e0f12 60%);
+            color: #e6eef3;
+            font-family: "Segoe UI", sans-serif;
+            transition: background 0.6s ease;
+        }
+
         /* ★天気アニメ用キャンバス（画面全体に固定表示） */
-    #weather-animation {
-      position: fixed;
-      inset: 0;              /* top:0;right:0;bottom:0;left:0 と同じ */
-      pointer-events: none;  /* クリックなどを邪魔しない */
-      z-index: 0;            /* 一番後ろ側 */
-    }
+        #weather-animation {
+            position: fixed;
+            inset: 0;
+            /* top:0;right:0;bottom:0;left:0 と同じ */
+            pointer-events: none;
+            /* クリックなどを邪魔しない */
+            z-index: 0;
+            /* 一番後ろ側 */
+        }
 
-    /* nav と main がアニメの上に来るように */
-    nav, main {
-      position: relative;
-      z-index: 1;
-    }
-    nav { width: 200px; background: rgba(0, 0, 0, 0.4); display: flex; flex-direction: column; align-items: start; padding: 20px; }
-    nav button { background: none; border: none; color: white; font-size: 16px; margin: 10px 0; text-align: left; cursor: pointer; width: 100%; transition: 0.3s; }
-    nav button:hover { color: var(--accent); }
-    main { flex: 1; padding: 40px; opacity: 1; transition: opacity 0.5s ease; }
-    main.fade-out { opacity: 0; }
-    h1 { font-size: 28px; color: var(--accent); }
-    .weather { margin-top: 20px; }
-    .temp { font-size: 48px; }
-    .spotify-btn { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 50px; font-size: 16px; cursor: pointer; margin-top: 20px; }
-    .playlist-card { background: rgba(0, 0, 0, 0.25); border: 1px solid #222; border-radius: 12px; padding: 12px 16px; margin-top: 14px; }
-    .playlist-card h4 { margin: 0; font-size: 18px; color: #f5f8fa; }
-    .playlist-card p { margin: 4px 0 12px; opacity: .75; font-size: 14px; }
-    .muted { opacity: .65; }
-    .color-picker { margin-top: 20px; }
-    ul { list-style: none; padding: 0; }
-    li { margin: 12px 0; cursor: pointer; transition: color 0.3s; }
-    li:hover { color: var(--accent); }
-    audio { margin-top: 20px; width: 100%; }
-    #player-bar{position:sticky;bottom:0;left:0;right:0;padding:12px;border-top:1px solid #333;display:flex;gap:12px;align-items:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);}
-    #player-bar button,#player-bar input[type=range]{cursor:pointer;}
-    #player-bar .spacer{flex:1;}
-    #premium-hint{display:none;margin-left:8px;opacity:.8;}
-    #open-in-spotify{display:none;color:#1DB954;text-decoration:underline;}
-  </style>
+        /* nav と main がアニメの上に来るように */
+        nav,
+        main {
+            position: relative;
+            z-index: 1;
+        }
+
+        nav {
+            width: 200px;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: start;
+            padding: 20px;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 16px;
+            margin: 10px 0;
+            text-align: left;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+
+        nav button:hover {
+            color: var(--accent);
+        }
+
+        main {
+            flex: 1;
+            padding: 40px;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        main.fade-out {
+            opacity: 0;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: var(--accent);
+        }
+
+        .weather {
+            margin-top: 20px;
+        }
+
+        .temp {
+            font-size: 48px;
+        }
+
+        .spotify-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .playlist-card {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid #222;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-top: 14px;
+        }
+
+        .playlist-card h4 {
+            margin: 0;
+            font-size: 18px;
+            color: #f5f8fa;
+        }
+
+        .playlist-card p {
+            margin: 4px 0 12px;
+            opacity: .75;
+            font-size: 14px;
+        }
+
+        .muted {
+            opacity: .65;
+        }
+
+        .color-picker {
+            margin-top: 20px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            margin: 12px 0;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        li:hover {
+            color: var(--accent);
+        }
+
+        audio {
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        #player-bar {
+            position: sticky;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px;
+            border-top: 1px solid #333;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+        }
+
+        #player-bar button,
+        #player-bar input[type=range] {
+            cursor: pointer;
+        }
+
+        #player-bar .spacer {
+            flex: 1;
+        }
+
+        #premium-hint {
+            display: none;
+            margin-left: 8px;
+            opacity: .8;
+        }
+
+        #open-in-spotify {
+            display: none;
+            color: #1DB954;
+            text-decoration: underline;
+        }
+    </style>
 </head>
+
 <body>
-  <!-- ★天気アニメーション用のキャンバス -->
-  <canvas id="weather-animation"></canvas>
-  <nav>
-    <div id="user-info" style="color:#9fd8b7;margin-bottom:8px;"></div>
-    <button onclick="changePage('home')">🏠 ホーム</button>
-    <button onclick="changePage('playlist')">🎵 プレイリスト</button>
-    <button onclick="changePage('settings')">⚙️ 設定</button>
-    <button id="login-btn" class="spotify-btn">Spotify ログイン</button>
-  </nav>
+    <!-- ★天気アニメーション用のキャンバス -->
+    <canvas id="weather-animation"></canvas>
+    <nav>
+        <div id="user-info" style="color:#9fd8b7;margin-bottom:8px;"></div>
+        <button onclick="changePage('home')">🏠 ホーム</button>
+        <button onclick="changePage('playlist')">🎵 プレイリスト</button>
+        <button onclick="changePage('settings')">⚙️ 設定</button>
+        <button id="login-btn" class="spotify-btn">Spotify ログイン</button>
+    </nav>
 
-  <main id="content">
-    <h1>Weather BGM Player</h1>
-    <div id="weather-area"></div>
-    <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
-      <button class="spotify-btn" onclick="playWeatherOnSpotify()">天気に合わせてSpotifyで再生</button>
-      <!-- このボタンは埋め込みプレイヤーまでスクロールするだけに変更 -->
-      <button class="spotify-btn" style="background:#2b8a3e;" onclick="playWeatherLocally()">ブラウザでBGM再生</button>
-    </div>
-    <div id="weather-playlist" style="margin-top:24px;"></div>
-    <div id="weather-player" style="margin-top:24px;"></div>
+    <main id="content">
+        <h1>Weather BGM Player</h1>
+        <div id="weather-area"></div>
+        <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+            <button class="spotify-btn" onclick="playWeatherOnSpotify()">天気に合わせてSpotifyで再生</button>
+            <!-- このボタンは埋め込みプレイヤーまでスクロールするだけに変更 -->
+            <button class="spotify-btn" style="background:#2b8a3e;" onclick="playWeatherLocally()">ブラウザでBGM再生</button>
+        </div>
+        <div id="weather-playlist" style="margin-top:24px;"></div>
+        <div id="weather-player" style="margin-top:24px;"></div>
 
-    
-  </main>
 
-  <script>
-    let currentUserId = null;
-    const content = document.getElementById('content');
-    const OWM_API_KEY = "677857b64fb220eca86422d22aa48502";
-    window.__CURRENT_PAGE__ = 'home'; 
+    </main>
 
-    // ■ 天気ごとの Spotify 埋め込みプレイリスト ID
-    // 　※ここを自分のプレイリストIDに差し替えてOK
-    const WEATHER_SPOTIFY_EMBEDS = {
-      Clear:   "37i9dQZF1DX1BzILRveYHb",
-      Clouds:  "70z8IFIsiDbuhqk31PEzg2",
-      Rain:    "7M0eY74HWuqEeDG025oX2y",
-      Drizzle: "6gT9NAs3rsCNnpojsDEJnI",
-      Thunderstorm: "6GSL0FPKhtJusmtdOf4X5e",
-      Snow:    "4qAwf4rc4qV1ip9QWM4V0q",
-      Mist:    "37i9dQZF1DWZqNqPemiefM",
-      Fog:     "6lWhmAjP6PEvLTscLQ5qkS",
-      Haze:    "6sYhyOpqzC9KHwtCWOpeli",
-      Smoke:   "5DAU4ZGG3uZ5RgsK8q5JdZ",
-      Default: "37i9dQZF1E37tmQy7dPy4B"
-    };
+    <script>
+        let currentUserId = null;
+        const content = document.getElementById('content');
+        const OWM_API_KEY = "677857b64fb220eca86422d22aa48502";
+        window.__CURRENT_PAGE__ = 'home';
 
-    const LOCAL_VOLUME_KEY = 'localBgmVolume';
+        // ■ 天気ごとの Spotify 埋め込みプレイリスト ID
+        // 　※ここを自分のプレイリストIDに差し替えてOK
+        const WEATHER_SPOTIFY_EMBEDS = {
+            Clear: "37i9dQZF1DX1BzILRveYHb",
+            Clouds: "70z8IFIsiDbuhqk31PEzg2",
+            Rain: "7M0eY74HWuqEeDG025oX2y",
+            Drizzle: "6gT9NAs3rsCNnpojsDEJnI",
+            Thunderstorm: "6GSL0FPKhtJusmtdOf4X5e",
+            Snow: "4qAwf4rc4qV1ip9QWM4V0q",
+            Mist: "37i9dQZF1DWZqNqPemiefM",
+            Fog: "6lWhmAjP6PEvLTscLQ5qkS",
+            Haze: "6sYhyOpqzC9KHwtCWOpeli",
+            Smoke: "5DAU4ZGG3uZ5RgsK8q5JdZ",
+            Default: "37i9dQZF1E37tmQy7dPy4B"
+        };
 
-    (function restoreFromParam(){
-      const from = new URLSearchParams(location.search).get('from');
-      if (from) {
-        changePage(from);
-        history.replaceState({}, '', location.origin + location.pathname);
-      }
-    })();
+        const LOCAL_VOLUME_KEY = 'localBgmVolume';
 
-    function changePage(page) {
-      window.__CURRENT_PAGE__ = page;
-      content.classList.add("fade-out");
-      setTimeout(() => {
-        if (page === "home") {
-          content.innerHTML = `
+        (function restoreFromParam() {
+            const from = new URLSearchParams(location.search).get('from');
+            if (from) {
+                changePage(from);
+                history.replaceState({}, '', location.origin + location.pathname);
+            }
+        })();
+
+        function changePage(page) {
+            window.__CURRENT_PAGE__ = page;
+            content.classList.add("fade-out");
+            setTimeout(() => {
+                if (page === "home") {
+                    content.innerHTML = `
             <h1>Weather BGM Player</h1>
             <div id="weather-area"></div>
-            <div style="margin-top:16px;">
-              <button class="spotify-btn" onclick="playWeatherOnSpotify()">在 Spotify 播放 天気BGM</button>
-            </div>
+            <div style="margin-top:16px;"></div>
             
             <div id="weather-playlist" style="margin-top:24px;"></div>
             
           `;
-          loadWeather(); 
-        } else if (page === "playlist") {
-          content.innerHTML = `
+                    loadWeather();
+                } else if (page === "playlist") {
+                    content.innerHTML = `
             <h1>🎵 プレイリスト</h1>
             <div id="playlist-toolbar" style="margin-bottom:12px;display:flex;gap:12px;align-items:center;">
               <button class="spotify-btn" onclick="connectSpotify()">Spotify 連携/更新</button>
@@ -133,10 +265,10 @@
             <div id="playlist-tracks" style="margin-top:20px;"></div>
             
           `;
-          bindControlEvents(); initControls();
-          renderUserPlaylists();   
-        } else if (page === "settings") {
-          content.innerHTML = `
+                    bindControlEvents(); initControls();
+                    renderUserPlaylists();
+                } else if (page === "settings") {
+                    content.innerHTML = `
             <h1>⚙️ 設定</h1>
             <button class="spotify-btn" onclick="connectSpotify()">Spotify 連携</button>
             <button class="spotify-btn" style="background:#e53935;margin-top:12px;" onclick="logoutSpotify()">Spotify ログアウト</button>
@@ -145,478 +277,453 @@
               <input type="color" id="color-input" />
             </div>
           `;
-          setupColorPicker(); initControls();
-        }
-        content.classList.remove("fade-out");
-      }, 400);
-    }
-
-    function resolveWeatherKey(main) {
-      // 元のロジックを流用
-      if (WEATHER_SPOTIFY_EMBEDS[main]) return main;
-      if (['Mist', 'Fog', 'Haze', 'Smoke'].includes(main) && WEATHER_SPOTIFY_EMBEDS['Mist']) return 'Mist';
-      return 'Default';
-    }
-
-    function updateCurrentTrackLabel(text) {
-      const label = document.getElementById('current-track');
-      if (!label) return;
-      label.textContent = text || '';
-    }
-
-    // ★ここを「自作BGMリスト」→「Spotify埋め込みプレーヤー表示」に変更
-async function loadWeatherPlaylist(weatherKey) {
-    if (!currentUserId) return;
-
-    const iframe = document.getElementById("playlist-frame");
-    if (!iframe) return;
-
-    try {
-        const res = await fetch(
-            `/api/weather-playlist/random?uid=${encodeURIComponent(currentUserId)}&weather=${encodeURIComponent(weatherKey)}`
-        );
-
-        if (!res.ok) return;
-
-        const json = await res.json();
-        if (!json.found) {
-            console.log("DB未登録 → デフォルトのまま");
-            return;
+                    setupColorPicker(); initControls();
+                    const colorInput = document.getElementById('color-input');
+                    const playlistWrapper = document.getElementById('playlist-wrapper');
+                    colorInput.addEventListener('input', (e) => {
+                        if (playlistWrapper) playlistWrapper.style.background = e.target.value;
+                    });
+                }
+                content.classList.remove("fade-out");
+            }, 400);
         }
 
-        iframe.src =
-            `https://open.spotify.com/embed/playlist/${json.playlist.playlist_id}`;
-
-        console.log("DB反映:", weatherKey, json.playlist.playlist_id);
-
-    } catch (e) {
-        console.error("loadWeatherPlaylist error", e);
-    }
-}
-
-
-    function ensureLocalVolume(player, slider) {
-      if (!player) return;
-      let volume = 0.5;
-      const saved = parseFloat(localStorage.getItem(LOCAL_VOLUME_KEY));
-      if (Number.isFinite(saved) && saved >= 0 && saved <= 1) volume = saved;
-
-      player.volume = volume;
-      if (slider) slider.value = Math.round(volume * 100);
-    }
-
-    function setupColorPicker() {
-      const colorInput = document.getElementById('color-input');
-      const savedAccent = localStorage.getItem('accentColor');
-      if (savedAccent) {
-        colorInput.value = savedAccent;
-        document.documentElement.style.setProperty('--accent', savedAccent);
-        document.body.style.background = `linear-gradient(180deg, ${savedAccent} 0%, #0e0f12 60%)`;
-      }
-      colorInput.addEventListener('input', () => {
-        const newColor = colorInput.value;
-        document.documentElement.style.setProperty('--accent', newColor);
-        localStorage.setItem('accentColor', newColor);
-        document.body.style.background = `linear-gradient(180deg, ${newColor} 0%, #0e0f12 60%)`;
-      });
-    }
-function mapWeather(main) {
-  if (main === "Clear") {
-    return { label: "晴れ", key: "sunny", icon: "☀️", accent: "#f7b733" };
-  }
-  if (main === "Clouds") {
-    return { label: "くもり", key: "cloudy", icon: "☁️", accent: "#5f9ea0" };
-  }
-  if (main === "Rain" || main === "Drizzle") {
-    return { label: "雨", key: "rainy", icon: "🌧️", accent: "#4a90e2" };
-  }
-  if (main === "Snow") {
-    return { label: "雪", key: "snowy", icon: "❄️", accent: "#00bcd4" };
-  }
-  if (main === "Thunderstorm") {
-    return { label: "雷雨", key: "rainy", icon: "⛈️", accent: "#3b3b98" };
-  }
-  if (main === "Mist" || main === "Fog") {
-    return { label: "霧", key: "cloudy", icon: "🌫️", accent: "#aab2bd" };
-  }
-
-  return { label: "天気", key: "default", icon: "🌈", accent: "#1db954" };
-}
-
-    async function loadWeather() {
-      const area = document.getElementById('weather-area');
-      if (!area) return;
-      let used = false;
-      try {
-        const loc = await getLocationWithFallback();
-        const lat = loc.lat;
-        const lon = loc.lon;
-        const cityFromGeo = loc.city;
-
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&units=metric&lang=ja&appid=${encodeURIComponent(OWM_API_KEY)}`;
-        const wRes = await fetch(url);
-
-        if (!wRes.ok) {
-          const txt = await wRes.text().catch(() => '');
-          console.error('[weather] OWM not ok', wRes.status, txt);
-          if (wRes.status === 401) {
-            area.innerHTML = `<p>OpenWeatherMapのAPIキーが無効です（401）。キーを確認してください。</p>`;
-          } else if (wRes.status === 429) {
-            area.innerHTML = `<p>リクエストが多すぎます（429）。少し待ってから再試行してください。</p>`;
-          } else {
-            area.innerHTML = `<p>天気情報の取得に失敗しました（${wRes.status}）。</p>`;
-          }
-          return;
+        function resolveWeatherKey(main) {
+            // 元のロジックを流用
+            if (WEATHER_SPOTIFY_EMBEDS[main]) return main;
+            if (['Mist', 'Fog', 'Haze', 'Smoke'].includes(main) && WEATHER_SPOTIFY_EMBEDS['Mist']) return 'Mist';
+            return 'Default';
         }
 
-      const wData = await wRes.json();
+        function updateCurrentTrackLabel(text) {
+            const label = document.getElementById('current-track');
+            if (!label) return;
+            label.textContent = text || '';
+        }
 
-const t = Math.round(wData?.main?.temp ?? NaN);
-const main = wData?.weather?.[0]?.main || "Clouds";
-const city = cityFromGeo || wData?.name || "—";
 
-const w = mapWeather(main);
 
-const saved = localStorage.getItem("accentColor");
-const finalAccent = saved || w.accent;
+        function ensureLocalVolume(player, slider) {
+            if (!player) return;
+            let volume = 0.5;
+            const saved = parseFloat(localStorage.getItem(LOCAL_VOLUME_KEY));
+            if (Number.isFinite(saved) && saved >= 0 && saved <= 1) volume = saved;
 
-document.documentElement.style.setProperty("--accent", finalAccent);
-document.body.style.background =
-  `linear-gradient(180deg, ${finalAccent} 0%, #0e0f12 60%)`;
+            player.volume = volume;
+            if (slider) slider.value = Math.round(volume * 100);
+        }
 
-const tempHtml = isNaN(t) ? "—" : `${t}°C`;
+        function setupColorPicker() {
+            const colorInput = document.getElementById('color-input');
+            const savedAccent = localStorage.getItem('accentColor');
+            if (savedAccent) {
+                colorInput.value = savedAccent;
+                document.documentElement.style.setProperty('--accent', savedAccent);
+                document.body.style.background = `linear-gradient(180deg, ${savedAccent} 0%, #0e0f12 60%)`;
+            }
+            colorInput.addEventListener('input', () => {
+                const newColor = colorInput.value;
+                document.documentElement.style.setProperty('--accent', newColor);
+                localStorage.setItem('accentColor', newColor);
+                document.body.style.background = `linear-gradient(180deg, ${newColor} 0%, #0e0f12 60%)`;
+            });
+        }
+        function mapWeather(main) {
+            if (main === "Clear") {
+                return { label: "晴れ", key: "sunny", icon: "☀️", accent: "#f7b733" };
+            }
+            if (main === "Clouds") {
+                return { label: "くもり", key: "cloudy", icon: "☁️", accent: "#5f9ea0" };
+            }
+            if (main === "Rain" || main === "Drizzle") {
+                return { label: "雨", key: "rainy", icon: "🌧️", accent: "#4a90e2" };
+            }
+            if (main === "Snow") {
+                return { label: "雪", key: "snowy", icon: "❄️", accent: "#00bcd4" };
+            }
+            if (main === "Thunderstorm") {
+                return { label: "雷雨", key: "rainy", icon: "⛈️", accent: "#3b3b98" };
+            }
+            if (main === "Mist" || main === "Fog") {
+                return { label: "霧", key: "cloudy", icon: "🌫️", accent: "#aab2bd" };
+            }
 
-area.innerHTML = `
+            return { label: "天気", key: "default", icon: "🌈", accent: "#1db954" };
+        }
+
+        async function loadWeather() {
+            const area = document.getElementById('weather-area');
+            if (!area) return;
+            let used = false;
+            try {
+                const loc = await getLocationWithFallback();
+                const lat = loc.lat;
+                const lon = loc.lon;
+                const cityFromGeo = loc.city;
+
+                const url = `https://api.openweathermap.org/data/2.5/weather?lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&units=metric&lang=ja&appid=${encodeURIComponent(OWM_API_KEY)}`;
+                const wRes = await fetch(url);
+
+                if (!wRes.ok) {
+                    const txt = await wRes.text().catch(() => '');
+                    console.error('[weather] OWM not ok', wRes.status, txt);
+                    if (wRes.status === 401) {
+                        area.innerHTML = `<p>OpenWeatherMapのAPIキーが無効です（401）。キーを確認してください。</p>`;
+                    } else if (wRes.status === 429) {
+                        area.innerHTML = `<p>リクエストが多すぎます（429）。少し待ってから再試行してください。</p>`;
+                    } else {
+                        area.innerHTML = `<p>天気情報の取得に失敗しました（${wRes.status}）。</p>`;
+                    }
+                    return;
+                }
+
+                const wData = await wRes.json();
+
+                const t = Math.round(wData?.main?.temp ?? NaN);
+                const main = wData?.weather?.[0]?.main || "Clouds";
+                const city = cityFromGeo || wData?.name || "—";
+
+                const w = mapWeather(main);
+
+                const saved = localStorage.getItem("accentColor");
+                const finalAccent = saved || w.accent;
+
+                document.documentElement.style.setProperty("--accent", finalAccent);
+                document.body.style.background =
+                    `linear-gradient(180deg, ${finalAccent} 0%, #0e0f12 60%)`;
+
+                const tempHtml = isNaN(t) ? "—" : `${t}°C`;
+
+                area.innerHTML = `
   <div class="weather">
     <h3>${city} の天気</h3>
     <p>${w.icon} ${w.label}</p>
     <div class="temp">${tempHtml}</div>
     <div style="margin-top:6px;opacity:.7;font-size:14px;">
-      データ元: ${
-        loc.source === "browser" ? "ブラウザ位置情報"
-        : loc.source === "ipapi" ? "IP位置情報"
-        : "デフォルト"
-      }
+      データ元: ${loc.source === "browser" ? "ブラウザ位置情報"
+                        : loc.source === "ipapi" ? "IP位置情報"
+                            : "デフォルト"
+                    }
     </div>
   </div>
 `;
 
-// ★ ここが重要：DB → fallback の順
+                // ★ ここが重要：DB → fallback の順
 
-// ★ DB 用キーに変換
-const dbWeatherKey = weatherToDbKey(main);
+                // ★ DB 用キーに変換
+                const dbWeatherKey = weatherToDbKey(main);
 
-// ① iframe を必ず生成（Spotify公式 or デフォルト）
-renderWeatherPlaylist(main);
+                // ① iframe を必ず生成（Spotify公式 or デフォルト）
+                renderWeatherPlaylist(main);
 
-// ② DBに登録があれば iframe を上書き（ランダム）
-await loadWeatherPlaylist(dbWeatherKey);
+                // ② DBに登録があれば iframe を上書き（ランダム）
+                await loadWeatherPlaylist(dbWeatherKey);
 
 
-      } catch (e) {
-       console.error('[weather] error:', e);
-      if (area) area.innerHTML = `<p>天気情報の取得に失敗しました。</p>`;
-      window.__WEATHER_MAIN__ = 'Default';
-      
-      // ① iframe を作る
-      renderWeatherPlaylist('Default');
-      
-      // ② DB があれば上書き
-      await loadWeatherPlaylist('Default');
-      
-      // ③ 演出
-      setWeatherAnimation('Default');
+            } catch (e) {
+                console.error('[weather] error:', e);
+                if (area) area.innerHTML = `<p>天気情報の取得に失敗しました。</p>`;
+                window.__WEATHER_MAIN__ = 'Default';
 
-    }
-    }
+                // ① iframe を作る
+                renderWeatherPlaylist('Default');
 
-    window.onload = () => {
-      const savedAccent = localStorage.getItem('accentColor');
-      if (savedAccent) {
-        document.documentElement.style.setProperty('--accent', savedAccent);
-        document.body.style.background = `linear-gradient(180deg, ${savedAccent} 0%, #0e0f12 60%)`;
-      }
-      setWeatherAnimation('Default');
-      loadWeather();
-      bindControlEvents();
-      initControls();
-      
-      const loginBtn = document.getElementById('login-btn');
-      if (loginBtn) {
-        loginBtn.onclick = connectSpotify;
-      }
-    };
+                // ② DB があれば上書き
+                await loadWeatherPlaylist('Default');
 
-    
+                // ③ 演出
+                setWeatherAnimation('Default');
 
-    // ===== Spotify OAuth + Playback =====
-
-    (function ensureSdk(){
-      const s = document.createElement('script'); s.src = "https://sdk.scdn.co/spotify-player.js";
-      document.head.appendChild(s);
-    })();
-
-    async function api(path, opts={}){
-      const res = await fetch(path, {credentials:'include', ...opts});
-      if(!res.ok) throw new Error(path+' '+res.status);
-      const ct = res.headers.get('content-type')||'';
-      if(ct.includes('application/json')) return res.json();
-      return res.text();
-    }
-
-    function connectSpotify(){
-      const from = window.__CURRENT_PAGE__ || 'home';
-      window.location.href = '/login?from=' + encodeURIComponent(from);
-    }
-
-    let spotifyPlayer = null, spotifyDeviceId = null, IS_PREMIUM = false, LAST_OPEN_URL = null;
-
-    async function fetchAccessToken(){ const r = await fetch('/token', {credentials:'include'}); if(!r.ok) return null; const j = await r.json(); return j.access_token; }
-    async function ensureLoggedIn() {
-      try {
-        const me = await api('/me');
-    
-        currentUserId = me.id;
-        IS_PREMIUM = (me.product === 'premium');
-    
-        console.log("login user:", currentUserId, "premium:", IS_PREMIUM);
-    
-        return true;
-      } catch (e) {
-        console.warn("not logged in", e);
-        currentUserId = null;
-        IS_PREMIUM = false;
-        return false;
-      }
-    }
-
-    async function isPremiumUser(){ return IS_PREMIUM; }
-    function setLastOpenUrl(url){
-      LAST_OPEN_URL = url || null;
-      const openLink = document.getElementById('open-in-spotify');
-      const hint = document.getElementById('premium-hint');
-      if(!openLink || !hint) return;
-      if(IS_PREMIUM){ openLink.style.display = 'none'; hint.style.display = 'none'; }
-      else { if (LAST_OPEN_URL){ openLink.style.display = 'inline'; openLink.href = LAST_OPEN_URL; } else openLink.style.display = 'none'; hint.style.display = 'inline'; }
-    }
-    function setControlsDisabled(disabled){ ['btn-prev','btn-play','btn-next','vol'].forEach(id=>{ const el=document.getElementById(id); if (el) el.disabled = disabled; }); }
-    function bindControlEvents(){
-      const btnPrev=document.getElementById('btn-prev'); const btnPlay=document.getElementById('btn-play'); const btnNext=document.getElementById('btn-next'); const vol=document.getElementById('vol');
-      let isPaused = true;
-
-      if (btnPrev) btnPrev.onclick = async ()=>{
-        if (IS_PREMIUM && spotifyPlayer){ try { await spotifyPlayer.previousTrack(); } catch(e){} }
-      };
-
-      if (btnPlay) btnPlay.onclick = async ()=>{
-        if (IS_PREMIUM && spotifyPlayer){
-          try { if (isPaused) await spotifyPlayer.resume(); else await spotifyPlayer.pause(); }
-          catch(e){}
-        } else {
-          // 埋め込みプレイヤー利用時はここでは何もしない
-        }
-      };
-
-      if (btnNext) btnNext.onclick = async ()=>{
-        if (IS_PREMIUM && spotifyPlayer){ try { await spotifyPlayer.nextTrack(); } catch(e){} }
-      };
-
-      if (vol) vol.oninput = async (e)=>{
-        const v=Math.max(0,Math.min(1,e.target.value/100));
-        if (IS_PREMIUM && spotifyPlayer){
-          try { await spotifyPlayer.setVolume(v); }
-          catch(e){}
-        }
-      };
-
-      if (window.Spotify && spotifyPlayer) {
-        spotifyPlayer.addListener('player_state_changed', state => {
-          if (!state) return; isPaused = state.paused;
-          const btn = document.getElementById('btn-play');
-          if (btn) btn.textContent = state.paused ? '▶' : '⏸︎';
-          if (vol && typeof state.device?.volume_percent === 'number') vol.value = state.device.volume_percent;
-        });
-      }
-    }
-    async function initControls(){
-      const info = document.getElementById('user-info');
-      const logged = await ensureLoggedIn();
-
-      if (!logged){
-        if (info) info.textContent = '';
-        setControlsDisabled(false);
-        const a=document.getElementById('open-in-spotify'); const h=document.getElementById('premium-hint');
-        if(a) a.style.display='none'; if(h) h.style.display='none';
-        return;
-      }
-
-      try{
-        const me = await api('/me');
-        if (info) info.textContent = `🎧 ${me.display_name || me.id}`;
-        if (window.__CURRENT_PAGE__ === 'settings') {
-          const btn = document.querySelector('.spotify-btn');
-          if (btn) btn.textContent = `Spotify 連携済み（${me.display_name || me.id}）`;
-        }
-      }catch{}
-
-      if (IS_PREMIUM){
-        setControlsDisabled(false);
-        const a=document.getElementById('open-in-spotify'); const h=document.getElementById('premium-hint');
-        if(a) a.style.display='none'; if(h) h.style.display='none';
-      }else{
-        setControlsDisabled(false);
-        const h=document.getElementById('premium-hint'); if(h) h.style.display='inline';
-        if (LAST_OPEN_URL){ const a=document.getElementById('open-in-spotify'); if(a){ a.style.display='inline'; a.href=LAST_OPEN_URL; } }
-      }
-    }
-
-    window.onSpotifyWebPlaybackSDKReady = async () => {
-      const token = await fetchAccessToken(); if(!token) return;
-      spotifyPlayer = new Spotify.Player({
-        name: 'Weather BGM (Web Player)',
-        getOAuthToken: async cb => { const t = await fetchAccessToken(); if (t) cb(t); },
-        volume: 0.5
-      });
-      spotifyPlayer.addListener('initialization_error', ({ message }) => console.error(message));
-      spotifyPlayer.addListener('authentication_error', ({ message }) => console.error(message));
-      spotifyPlayer.addListener('account_error', ({ message }) => console.error(message));
-      spotifyPlayer.addListener('playback_error', ({ message }) => console.error(message));
-      spotifyPlayer.addListener('ready', ({ device_id }) => { spotifyDeviceId = device_id; });
-      spotifyPlayer.addListener('not_ready', ({ device_id }) => {});
-      await spotifyPlayer.connect();
-    };
-
-    const WEATHER_TO_QUERY = {
-      'Clear': ['summer vibes', 'sunny chill', 'city pop'],
-      'Rain': ['rainy day jazz', 'lofi rain', 'ambient rain'],
-      'Drizzle': ['rainy cafe', 'lofi rain'],
-      'Thunderstorm': ['dark ambient', 'cinematic storm'],
-      'Snow': ['cozy winter', 'winter jazz'],
-      'Clouds': ['cloudy day indie', 'indie chill'],
-      'Mist': ['ambient mist', 'dream pop'],
-      'Fog': ['ambient fog', 'deep focus']
-    };
-
-    async function waitForDeviceReady(timeoutMs = 8000) {
-      const start = Date.now();
-      while (!spotifyDeviceId && (Date.now() - start) < timeoutMs) { await new Promise(r => setTimeout(r, 200)); }
-      return Boolean(spotifyDeviceId);
-    }
-    async function ensureActiveDevice() {
-      const hasDevice = await waitForDeviceReady();
-      if (hasDevice) {
-        await fetch('/transfer', { method:'PUT', credentials:'include', headers:{'content-type':'application/json'}, body: JSON.stringify({device_id: spotifyDeviceId}) });
-        return true;
-      }
-      try { const list = await api('/devices'); const active = list.devices?.find(d => d.is_active); if (active) return true; }catch{}
-      alert('Spotifyデバイスが見つかりませんでした。');
-      return false;
-    }
-
-    async function playWeatherOnSpotify(){
-      const main = window.__WEATHER_MAIN__ || 'Clouds'; await pickSpotifyAndPlay(main);
-    }
-
-    // 「ブラウザでBGM再生」= 埋め込みプレイヤーまでスクロール
-    function playWeatherLocally() {
-      const el = document.getElementById('weather-playlist');
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    async function pickSpotifyAndPlay(weatherMain){
-      const loggedIn = await ensureLoggedIn();
-      if(!loggedIn){ return connectSpotify(); }
-      const token = await fetchAccessToken(); if(!token) return;
-
-      const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
-      const q = encodeURIComponent(queries[0]);
-      const res = await fetch('https://api.spotify.com/v1/search?type=playlist,track&limit=1&q='+q, { headers: { Authorization: 'Bearer '+token } });
-      if(!res.ok) return;
-      const data = await res.json();
-
-      let contextUri = null, trackUri = null, openUrl = null;
-      if (data.playlists?.items?.[0]) { const pl = data.playlists.items[0]; contextUri = pl.uri; openUrl = pl.external_urls?.spotify; }
-      else if (data.tracks?.items?.[0]) { const t = data.tracks.items[0]; trackUri = t.uri; openUrl = t.external_urls?.spotify; }
-      else { return; }
-
-      setLastOpenUrl(openUrl);
-
-      if (!(await isPremiumUser())) {
-        if (openUrl) setLastOpenUrl(openUrl);
-        return;
-      }
-      if (!(await ensureActiveDevice())) {
-        if (openUrl) setLastOpenUrl(openUrl);
-        return;
-      }
-
-      const body = contextUri ? { context_uri: contextUri } : { uris: [trackUri] };
-      const playRes = await fetch('/play', { method:'PUT', credentials:'include', headers:{'content-type':'application/json'}, body: JSON.stringify(body) });
-      if (!playRes.ok) {
-        if (openUrl) setLastOpenUrl(openUrl);
-      }
-    }
-
-    async function getLocationWithFallback() {
-    // ① まず ipapi から位置情報を取得（IPベース）
-      try {
-        const resp = await fetch('https://ipapi.co/json/');
-        if (!resp.ok) {
-          console.warn('[geo] ipapi status:', resp.status);
-          throw new Error('ipapi status ' + resp.status);
+            }
         }
 
-        const j = await resp.json();
-        // ipapi は latitude / longitude / city を返してくれる
-        if (j && typeof j.latitude === 'number' && typeof j.longitude === 'number') {
-          return {
-            lat: j.latitude,
-            lon: j.longitude,
-            city: j.city || null,
-            source: 'ipapi'
-          };
-        }
+        window.onload = () => {
+            const savedAccent = localStorage.getItem('accentColor');
+            if (savedAccent) {
+                document.documentElement.style.setProperty('--accent', savedAccent);
+                document.body.style.background = `linear-gradient(180deg, ${savedAccent} 0%, #0e0f12 60%)`;
+            }
+            setWeatherAnimation('Default');
+            loadWeather();
+            bindControlEvents();
+            initControls();
 
-        throw new Error('ipapi response missing lat/lon');
-      } catch (e) {
-        console.warn('[geo] ipapi error, fallback to default Tokyo:', e);
-
-        // ② ipapi がダメだった場合は東京駅付近をデフォルトにする
-        return {
-          lat: 35.681236,
-          lon: 139.767125,
-          city: '東京(デフォルト)',
-          source: 'default'
+            const loginBtn = document.getElementById('login-btn');
+            if (loginBtn) {
+                loginBtn.onclick = connectSpotify;
+            }
         };
-      }
-    }
 
 
-    async function renderUserPlaylists(){
-      const grid = document.getElementById('playlists');
-      const tracksPanel = document.getElementById('playlist-tracks');
-      if (!grid) return;
 
-      grid.innerHTML = `<div style="opacity:.8;">読み込み中...</div>`;
-      tracksPanel.innerHTML = '';
+        // ===== Spotify OAuth + Playback =====
 
-      const logged = await ensureLoggedIn();
-      if (!logged) {
-        grid.innerHTML = `<div style="opacity:.8;">未連携です。「Spotify 連携/更新」をクリックしてください。</div>`;
-        return;
-      }
+        (function ensureSdk() {
+            const s = document.createElement('script'); s.src = "https://sdk.scdn.co/spotify-player.js";
+            document.head.appendChild(s);
+        })();
 
-      try {
-        const data = await api('/playlists');
-        const items = data.items || [];
-        if (!items.length) {
-          grid.innerHTML = `<div style="opacity:.8;">プレイリストが見つかりませんでした。</div>`;
-          return;
+        async function api(path, opts = {}) {
+            const res = await fetch(path, { credentials: 'include', ...opts });
+            if (!res.ok) throw new Error(path + ' ' + res.status);
+            const ct = res.headers.get('content-type') || '';
+            if (ct.includes('application/json')) return res.json();
+            return res.text();
         }
 
-        grid.innerHTML = items.map(p => {
-          const img = p.image ? `<img src="${p.image}" alt="" style="width:100%;height:180px;object-fit:cover;border-radius:12px;">` : `<div style="width:100%;height:180px;background:#222;border-radius:12px;display:flex;align-items:center;justify-content:center;opacity:.6;">No Image</div>`;
-          return `
+        function connectSpotify() {
+            const from = window.__CURRENT_PAGE__ || 'home';
+            window.location.href = '/login?from=' + encodeURIComponent(from);
+        }
+
+        let spotifyPlayer = null, spotifyDeviceId = null, IS_PREMIUM = false, LAST_OPEN_URL = null;
+
+        async function fetchAccessToken() { const r = await fetch('/token', { credentials: 'include' }); if (!r.ok) return null; const j = await r.json(); return j.access_token; }
+        async function ensureLoggedIn() {
+            try {
+                const me = await api('/me');
+
+                currentUserId = me.id;
+                IS_PREMIUM = (me.product === 'premium');
+
+                console.log("login user:", currentUserId, "premium:", IS_PREMIUM);
+
+                return true;
+            } catch (e) {
+                console.warn("not logged in", e);
+                currentUserId = null;
+                IS_PREMIUM = false;
+                return false;
+            }
+        }
+
+        async function isPremiumUser() { return IS_PREMIUM; }
+        function setLastOpenUrl(url) {
+            LAST_OPEN_URL = url || null;
+            const openLink = document.getElementById('open-in-spotify');
+            const hint = document.getElementById('premium-hint');
+            if (!openLink || !hint) return;
+            if (IS_PREMIUM) { openLink.style.display = 'none'; hint.style.display = 'none'; }
+            else { if (LAST_OPEN_URL) { openLink.style.display = 'inline'; openLink.href = LAST_OPEN_URL; } else openLink.style.display = 'none'; hint.style.display = 'inline'; }
+        }
+        function setControlsDisabled(disabled) { ['btn-prev', 'btn-play', 'btn-next', 'vol'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = disabled; }); }
+        function bindControlEvents() {
+            const btnPrev = document.getElementById('btn-prev'); const btnPlay = document.getElementById('btn-play'); const btnNext = document.getElementById('btn-next'); const vol = document.getElementById('vol');
+            let isPaused = true;
+
+            if (btnPrev) btnPrev.onclick = async () => {
+                if (IS_PREMIUM && spotifyPlayer) { try { await spotifyPlayer.previousTrack(); } catch (e) { } }
+            };
+
+            if (btnPlay) btnPlay.onclick = async () => {
+                if (IS_PREMIUM && spotifyPlayer) {
+                    try { if (isPaused) await spotifyPlayer.resume(); else await spotifyPlayer.pause(); }
+                    catch (e) { }
+                } else {
+                    // 埋め込みプレイヤー利用時はここでは何もしない
+                }
+            };
+
+            if (btnNext) btnNext.onclick = async () => {
+                if (IS_PREMIUM && spotifyPlayer) { try { await spotifyPlayer.nextTrack(); } catch (e) { } }
+            };
+
+            if (vol) vol.oninput = async (e) => {
+                const v = Math.max(0, Math.min(1, e.target.value / 100));
+                if (IS_PREMIUM && spotifyPlayer) {
+                    try { await spotifyPlayer.setVolume(v); }
+                    catch (e) { }
+                }
+            };
+
+            if (window.Spotify && spotifyPlayer) {
+                spotifyPlayer.addListener('player_state_changed', state => {
+                    if (!state) return; isPaused = state.paused;
+                    const btn = document.getElementById('btn-play');
+                    if (btn) btn.textContent = state.paused ? '▶' : '⏸︎';
+                    if (vol && typeof state.device?.volume_percent === 'number') vol.value = state.device.volume_percent;
+                });
+            }
+        }
+        async function initControls() {
+            const info = document.getElementById('user-info');
+            const logged = await ensureLoggedIn();
+
+            if (!logged) {
+                if (info) info.textContent = '';
+                setControlsDisabled(false);
+                const a = document.getElementById('open-in-spotify'); const h = document.getElementById('premium-hint');
+                if (a) a.style.display = 'none'; if (h) h.style.display = 'none';
+                return;
+            }
+
+            try {
+                const me = await api('/me');
+                if (info) info.textContent = `🎧 ${me.display_name || me.id}`;
+                if (window.__CURRENT_PAGE__ === 'settings') {
+                    const btn = document.querySelector('.spotify-btn');
+                    if (btn) btn.textContent = `Spotify 連携済み（${me.display_name || me.id}）`;
+                }
+            } catch { }
+
+            if (IS_PREMIUM) {
+                setControlsDisabled(false);
+                const a = document.getElementById('open-in-spotify'); const h = document.getElementById('premium-hint');
+                if (a) a.style.display = 'none'; if (h) h.style.display = 'none';
+            } else {
+                setControlsDisabled(false);
+                const h = document.getElementById('premium-hint'); if (h) h.style.display = 'inline';
+                if (LAST_OPEN_URL) { const a = document.getElementById('open-in-spotify'); if (a) { a.style.display = 'inline'; a.href = LAST_OPEN_URL; } }
+            }
+        }
+
+        window.onSpotifyWebPlaybackSDKReady = async () => {
+            const token = await fetchAccessToken(); if (!token) return;
+            spotifyPlayer = new Spotify.Player({
+                name: 'Weather BGM (Web Player)',
+                getOAuthToken: async cb => { const t = await fetchAccessToken(); if (t) cb(t); },
+                volume: 0.5
+            });
+            spotifyPlayer.addListener('initialization_error', ({ message }) => console.error(message));
+            spotifyPlayer.addListener('authentication_error', ({ message }) => console.error(message));
+            spotifyPlayer.addListener('account_error', ({ message }) => console.error(message));
+            spotifyPlayer.addListener('playback_error', ({ message }) => console.error(message));
+            spotifyPlayer.addListener('ready', ({ device_id }) => { spotifyDeviceId = device_id; });
+            spotifyPlayer.addListener('not_ready', ({ device_id }) => { });
+            await spotifyPlayer.connect();
+        };
+
+        const WEATHER_TO_QUERY = {
+            'Clear': ['summer vibes', 'sunny chill', 'city pop'],
+            'Rain': ['rainy day jazz', 'lofi rain', 'ambient rain'],
+            'Drizzle': ['rainy cafe', 'lofi rain'],
+            'Thunderstorm': ['dark ambient', 'cinematic storm'],
+            'Snow': ['cozy winter', 'winter jazz'],
+            'Clouds': ['cloudy day indie', 'indie chill'],
+            'Mist': ['ambient mist', 'dream pop'],
+            'Fog': ['ambient fog', 'deep focus']
+        };
+
+        async function waitForDeviceReady(timeoutMs = 8000) {
+            const start = Date.now();
+            while (!spotifyDeviceId && (Date.now() - start) < timeoutMs) { await new Promise(r => setTimeout(r, 200)); }
+            return Boolean(spotifyDeviceId);
+        }
+        async function ensureActiveDevice() {
+            const hasDevice = await waitForDeviceReady();
+            if (hasDevice) {
+                await fetch('/transfer', { method: 'PUT', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ device_id: spotifyDeviceId }) });
+                return true;
+            }
+            try { const list = await api('/devices'); const active = list.devices?.find(d => d.is_active); if (active) return true; } catch { }
+            alert('Spotifyデバイスが見つかりませんでした。');
+            return false;
+        }
+
+        async function playWeatherOnSpotify() {
+            const main = window.__WEATHER_MAIN__ || 'Clouds'; await pickSpotifyAndPlay(main);
+        }
+
+        // 「ブラウザでBGM再生」= 埋め込みプレイヤーまでスクロール
+        function playWeatherLocally() {
+            const el = document.getElementById('weather-playlist');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function pickSpotifyAndPlay(weatherMain) {
+            const loggedIn = await ensureLoggedIn();
+            if (!loggedIn) { return connectSpotify(); }
+            const token = await fetchAccessToken(); if (!token) return;
+
+            const queries = WEATHER_TO_QUERY[weatherMain] || WEATHER_TO_QUERY['Clouds'];
+            const q = encodeURIComponent(queries[0]);
+            const res = await fetch('https://api.spotify.com/v1/search?type=playlist,track&limit=1&q=' + q, { headers: { Authorization: 'Bearer ' + token } });
+            if (!res.ok) return;
+            const data = await res.json();
+
+            let contextUri = null, trackUri = null, openUrl = null;
+            if (data.playlists?.items?.[0]) { const pl = data.playlists.items[0]; contextUri = pl.uri; openUrl = pl.external_urls?.spotify; }
+            else if (data.tracks?.items?.[0]) { const t = data.tracks.items[0]; trackUri = t.uri; openUrl = t.external_urls?.spotify; }
+            else { return; }
+
+            setLastOpenUrl(openUrl);
+
+            if (!(await isPremiumUser())) {
+                if (openUrl) setLastOpenUrl(openUrl);
+                return;
+            }
+            if (!(await ensureActiveDevice())) {
+                if (openUrl) setLastOpenUrl(openUrl);
+                return;
+            }
+
+            const body = contextUri ? { context_uri: contextUri } : { uris: [trackUri] };
+            const playRes = await fetch('/play', { method: 'PUT', credentials: 'include', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+            if (!playRes.ok) {
+                if (openUrl) setLastOpenUrl(openUrl);
+            }
+        }
+
+        async function getLocationWithFallback() {
+            // ① まず ipapi から位置情報を取得（IPベース）
+            try {
+                const resp = await fetch('https://ipapi.co/json/');
+                if (!resp.ok) {
+                    console.warn('[geo] ipapi status:', resp.status);
+                    throw new Error('ipapi status ' + resp.status);
+                }
+
+                const j = await resp.json();
+                // ipapi は latitude / longitude / city を返してくれる
+                if (j && typeof j.latitude === 'number' && typeof j.longitude === 'number') {
+                    return {
+                        lat: j.latitude,
+                        lon: j.longitude,
+                        city: j.city || null,
+                        source: 'ipapi'
+                    };
+                }
+
+                throw new Error('ipapi response missing lat/lon');
+            } catch (e) {
+                console.warn('[geo] ipapi error, fallback to default Tokyo:', e);
+
+                // ② ipapi がダメだった場合は東京駅付近をデフォルトにする
+                return {
+                    lat: 35.681236,
+                    lon: 139.767125,
+                    city: '東京(デフォルト)',
+                    source: 'default'
+                };
+            }
+        }
+
+
+        async function renderUserPlaylists() {
+            const grid = document.getElementById('playlists');
+            const tracksPanel = document.getElementById('playlist-tracks');
+            if (!grid) return;
+
+            grid.innerHTML = `<div style="opacity:.8;">読み込み中...</div>`;
+            tracksPanel.innerHTML = '';
+
+            const logged = await ensureLoggedIn();
+            if (!logged) {
+                grid.innerHTML = `<div style="opacity:.8;">未連携です。「Spotify 連携/更新」をクリックしてください。</div>`;
+                return;
+            }
+
+            try {
+                const data = await api('/playlists');
+                const items = data.items || [];
+                if (!items.length) {
+                    grid.innerHTML = `<div style="opacity:.8;">プレイリストが見つかりませんでした。</div>`;
+                    return;
+                }
+
+                grid.innerHTML = items.map(p => {
+                    const img = p.image ? `<img src="${p.image}" alt="" style="width:100%;height:180px;object-fit:cover;border-radius:12px;">` : `<div style="width:100%;height:180px;background:#222;border-radius:12px;display:flex;align-items:center;justify-content:center;opacity:.6;">No Image</div>`;
+                    return `
             <div class="pl-card" data-plid="${p.id}" data-uri="${p.uri}" data-ext="${p.external_url || ''}" style="background:rgba(0,0,0,.25);border:1px solid #222;border-radius:14px;padding:10px;">
               <div class="pl-cover" style="position:relative;cursor:pointer;">
                 ${img}
@@ -630,309 +737,313 @@ await loadWeatherPlaylist(dbWeatherKey);
               </div>
             </div>
           `;
-        }).join('');
+                }).join('');
 
-        grid.querySelectorAll('.pl-card').forEach(card => {
-          const id = card.dataset.plid;
-          const uri = card.dataset.uri;
-          const ext = card.dataset.ext;
+                grid.querySelectorAll('.pl-card').forEach(card => {
+                    const id = card.dataset.plid;
+                    const uri = card.dataset.uri;
+                    const ext = card.dataset.ext;
 
-          card.querySelector('.pl-cover').addEventListener('click', () => {
-            playSpotifyPlaylist({ id, uri, external_url: ext });
-          });
-          card.querySelector('.play-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            playSpotifyPlaylist({ id, uri, external_url: ext });
-          });
+                    card.querySelector('.pl-cover').addEventListener('click', () => {
+                        playSpotifyPlaylist({ id, uri, external_url: ext });
+                    });
+                    card.querySelector('.play-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        playSpotifyPlaylist({ id, uri, external_url: ext });
+                    });
 
-          card.querySelector('.open-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (ext) window.open(ext, '_blank');
-          });
+                    card.querySelector('.open-btn').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (ext) window.open(ext, '_blank');
+                    });
 
-          card.querySelector('.tracks-btn').addEventListener('click', async (e) => {
-            e.stopPropagation();
-            await renderTracksForPlaylist(id, card, tracksPanel);
-          });
-          addWeatherBtn(card, {
-            id: id,
-            name: card.querySelector('div[style*="font-weight"]').textContent
-          });
-        });
+                    card.querySelector('.tracks-btn').addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        await renderTracksForPlaylist(id, card, tracksPanel);
+                    });
+                    addWeatherBtn(card, {
+                        id: id,
+                        name: card.querySelector('div[style*="font-weight"]').textContent
+                    });
+                });
 
-      } catch (e) {
-        console.error('renderUserPlaylists error', e);
-        grid.innerHTML = `<div style="opacity:.8;">プレイリストの取得に失敗しました。</div>`;
-      }
-    }
-
-    async function playSpotifyPlaylist(playlist){
-      setLastOpenUrl(playlist.external_url || null);
-
-      const logged = await ensureLoggedIn();
-      if (!logged) return connectSpotify();
-
-      if (!(await isPremiumUser())) {
-        if (playlist.external_url) location.href = playlist.external_url;
-        return;
-      }
-
-      const ok = await ensureActiveDevice();
-      if (!ok) {
-        if (playlist.external_url) location.href = playlist.external_url;
-        return;
-      }
-
-      try {
-        const res = await fetch('/play', {
-          method:'PUT',
-          credentials:'include',
-          headers:{'content-type':'application/json'},
-          body: JSON.stringify({ context_uri: playlist.uri })
-        });
-        if(!res.ok && playlist.external_url){
-          location.href = playlist.external_url;
+            } catch (e) {
+                console.error('renderUserPlaylists error', e);
+                grid.innerHTML = `<div style="opacity:.8;">プレイリストの取得に失敗しました。</div>`;
+            }
         }
-      } catch (e) {
-        console.error('play playlist error', e);
-        if (playlist.external_url) location.href = playlist.external_url;
-      }
-    }
 
-    async function renderTracksForPlaylist(playlistId, cardEl, panelEl){
-      if (!panelEl) return;
-      panelEl.innerHTML = `<div style="opacity:.8;">曲目読み込み中...</div>`;
-      try{
-        const data = await api(`/playlist/${encodeURIComponent(playlistId)}/tracks?limit=100`);
-        const items = data.items || [];
+        async function playSpotifyPlaylist(playlist) {
+            setLastOpenUrl(playlist.external_url || null);
+
+            const logged = await ensureLoggedIn();
+            if (!logged) return connectSpotify();
+
+            if (!(await isPremiumUser())) {
+                if (playlist.external_url) location.href = playlist.external_url;
+                return;
+            }
+
+            const ok = await ensureActiveDevice();
+            if (!ok) {
+                if (playlist.external_url) location.href = playlist.external_url;
+                return;
+            }
+
+            try {
+                const res = await fetch('/play', {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({ context_uri: playlist.uri })
+                });
+                if (!res.ok && playlist.external_url) {
+                    location.href = playlist.external_url;
+                }
+            } catch (e) {
+                console.error('play playlist error', e);
+                if (playlist.external_url) location.href = playlist.external_url;
+            }
+        }
+
+        async function renderTracksForPlaylist(playlistId, cardEl, panelEl) {
+    if (!panelEl) return;
+    panelEl.innerHTML = `<div style="opacity:.8;">曲目読み込み中...</div>`;
+
+    try {
+        let items = [];
+        let url = `/playlist/${encodeURIComponent(playlistId)}/tracks?limit=100`;
+
+        // ページングで全曲取得
+        while (url) {
+            const data = await api(url);
+            if (data.items) items.push(...data.items);
+            url = data.next; // next が null になるまでループ
+        }
+
         if (!items.length) {
-          panelEl.innerHTML = `<div style="opacity:.8;">曲目がありません。</div>`;
-          return;
+            panelEl.innerHTML = `<div style="opacity:.8;">曲目がありません。</div>`;
+            return;
         }
+
         panelEl.innerHTML = `
-          <h3 style="margin-top:12px;">曲目（トップ ${items.length} 曲）</h3>
-          <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px;">
-            ${items.map((t,i)=>`
-              <div style="display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.25);border:1px solid #222;border-radius:10px;padding:8px;">
-                <div style="width:40px;text-align:right;opacity:.7;">${i+1}</div>
-                ${t.image ? `<img src="${t.image}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<div style="width:40px;height:40px;background:#222;border-radius:6px;"></div>`}
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(t.name)}</div>
-                  <div style="opacity:.8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml((t.artists||[]).join(', '))}</div>
-                </div>
-                <button onclick="openTrackExternally('${t.external_url || ''}')" style="border:1px solid #333;background:transparent;color:#e6eef3;border-radius:8px;padding:6px 10px;cursor:pointer;">再生</button>
-              </div>
-            `).join('')}
-          </div>
+            <h3 style="margin-top:12px;">曲目（全 ${items.length} 曲）</h3>
+            <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px;">
+                ${items.map((t, i) => `
+                    <div style="display:flex;gap:10px;align-items:center;background:rgba(0,0,0,.25);border:1px solid #222;border-radius:10px;padding:8px;">
+                        <div style="width:40px;text-align:right;opacity:.7;">${i + 1}</div>
+                        ${t.image ? `<img src="${t.image}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">` : `<div style="width:40px;height:40px;background:#222;border-radius:6px;"></div>`}
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(t.name)}</div>
+                            <div style="opacity:.8;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml((t.artists || []).join(', '))}</div>
+                        </div>
+                        <button onclick="openTrackExternally('${t.external_url || ''}')" style="border:1px solid #333;background:transparent;color:#e6eef3;border-radius:8px;padding:6px 10px;cursor:pointer;">再生</button>
+                    </div>
+                `).join('')}
+            </div>
         `;
-      }catch(e){
+    } catch (e) {
         console.error('renderTracksForPlaylist error', e);
         panelEl.innerHTML = `<div style="opacity:.8;">曲目の取得に失敗しました。</div>`;
-      }
     }
+}
 
-    function openTrackExternally(url){
-      if (!url) return;
-      window.open(url, '_blank');
-    }
+        function openTrackExternally(url) {
+            if (!url) return;
+            window.open(url, '_blank');
+        }
 
-    function escapeHtml(s){
-      return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    }
+        function escapeHtml(s) {
+            return (s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+        }
 
-    async function logoutSpotify() {
-      try {
-        await fetch('/logout', { method: 'POST', credentials: 'include' });
-        localStorage.removeItem('spotify_access_token');
-        localStorage.removeItem('spotify_refresh_token');
-    
-        const logoutUrl = 'https://accounts.spotify.com/logout?continue=' 
-                          + encodeURIComponent(window.location.origin + '/login.html');
-        window.location.href = logoutUrl;
-      } catch (err) {
-        console.error('ログアウト失敗:', err);
-      }
-    }
-    
+        async function logoutSpotify() {
+            try {
+                await fetch('/logout', { method: 'POST', credentials: 'include' });
+                localStorage.removeItem('spotify_access_token');
+                localStorage.removeItem('spotify_refresh_token');
+
+                const logoutUrl = 'https://accounts.spotify.com/logout?continue='
+                    + encodeURIComponent(window.location.origin + '/login.html');
+                window.location.href = logoutUrl;
+            } catch (err) {
+                console.error('ログアウト失敗:', err);
+            }
+        }
+
         // ページ読み込み時に更新
         //updateNavLoginButton();
-        function addWeatherBtn(card, pl) {
-    ["sunny", "cloudy"].forEach(w => {
+      async function addWeatherBtn(card, pl) {
+    const weathers = ["sunny", "cloudy", "rainy"];
+
+    for (const w of weathers) {
         const b = document.createElement("button");
-        b.textContent = w === "sunny" ? "晴れ用に登録" : "曇り用に登録";
 
+        // 初期文字は「〇〇に登録」
+        b.textContent = w === "sunny" ? "晴れ用に登録" : w === "cloudy" ? "曇り用に登録" : "雨用に登録";
+        b.style.cssText = "border:1px solid #333;background:transparent;color:#e6eef3;border-radius:8px;padding:6px 10px;cursor:pointer;";
+
+        // 登録済みか確認して表示更新
+        try {
+            const res = await fetch(`/api/weather-playlist/check?uid=${currentUserId}&weather=${w}&pid=${pl.id}`);
+            const json = await res.json();
+            if (json.registered) {
+                b.textContent = "登録済み";
+            }
+        } catch (e) {
+            console.error("登録チェックエラー", e);
+        }
+
+        // ボタンクリック処理
         b.onclick = async () => {
-
             if (!currentUserId) {
                 alert("Spotifyにログインしてください");
                 return;
             }
 
-            console.log(`${pl.name} を ${w} に登録`);
-
             try {
-                const res = await fetch("/api/weather-playlist/add", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        uid: currentUserId,
-                        weather: w,
-                        pid: pl.id,
-                        title: pl.name
-                    })
-                });
-
-                const json = await res.json();
-                console.log(json.message);
-
-                if (json.ok) {
-                    console.log("登録成功 → 表示更新");
+                if (b.textContent === "登録済み") {
+                    // 登録済みなら削除
+                    const res = await fetch("/api/weather-playlist/remove", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ uid: currentUserId, weather: w, pid: pl.id })
+                    });
+                    const json = await res.json();
+                    if (json.ok) {
+                        b.textContent = w === "sunny" ? "晴れ用に登録" : w === "cloudy" ? "曇り用に登録" : "雨用に登録";
+                        console.log("削除成功");
+                    } else {
+                        alert("削除に失敗しました");
+                    }
                 } else {
-                    alert("登録に失敗しました");
+                    // 未登録なら追加
+                    const res = await fetch("/api/weather-playlist/add", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ uid: currentUserId, weather: w, pid: pl.id, title: pl.name })
+                    });
+                    const json = await res.json();
+                    if (json.ok) {
+                        b.textContent = "登録済み";
+                        console.log("登録成功");
+                    } else {
+                        alert("登録に失敗しました");
+                    }
                 }
-
             } catch (e) {
-                console.error("登録エラー", e);
+                console.error("登録/削除エラー", e);
             }
         };
 
         card.appendChild(b);
-    });
+    }
 }
 
 
 
-        async function playByWeather(weather) {
-            const res = await fetch(
-                `/api/weather-playlist/random?uid=${currentUserId}&weather=${weather}`
-            );
-            const data = await res.json();
 
-            if (data.found) {
-                renderPlaylistIframe(
-                    data.playlist.playlist_id,
-                    data.playlist.title
-                );
+
+
+        async function loadWeatherPlaylist(weather) {
+            // ログインしていなければ何もしない
+            if (!currentUserId) return;
+
+            // iframe が存在しないページでは何もしない
+            const iframe = document.getElementById("playlist-frame");
+            if (!iframe) {
+                // playlist ページなどではここに来る
                 return;
             }
 
-            await createWeatherPlaylistIframe(weather);
+            try {
+                const res = await fetch(
+                    `/api/weather-playlist/random?uid=${encodeURIComponent(currentUserId)}&weather=${encodeURIComponent(weather)}`
+                );
+
+                if (!res.ok) {
+                    console.warn("[weather-playlist] response not ok:", res.status);
+                    return;
+                }
+
+                const json = await res.json();
+
+                // DBに未登録ならデフォルトのまま
+                if (!json.found) {
+                    console.log("DB未登録 → デフォルトのまま");
+                    return;
+                }
+
+                // iframe を DB のプレイリストに差し替え
+                iframe.src =
+                    `https://open.spotify.com/embed/playlist/${json.playlist.playlist_id}`;
+
+                console.log("iframe 更新:", json.playlist.playlist_id);
+
+            } catch (e) {
+                console.error("loadWeatherPlaylist error", e);
+            }
         }
 
 
-
-
-
-        function renderPlaylistIframe(pid, title = null) {
-            const area = document.getElementById("weather-player");
-            if (!area) return;
-
-            area.innerHTML = `
-            ${title ? `<h3>${title}</h3>` : ""}
-            <iframe
-                style="border-radius:12px"
-                src="https://open.spotify.com/embed/playlist/${pid}"
-                width="100%"
-                height="380"
-                frameborder="0"
-                allow="encrypted-media"
-                loading="lazy">
-            </iframe>
-            `;
+        function weatherToDbKey(main) {
+            switch (main) {
+                case "Clear":
+                    return "sunny";
+                case "Clouds":
+                    return "cloudy";
+                case "Rain":
+                case "Drizzle":
+                case "Thunderstorm":
+                    return "rainy";
+                case "Snow":
+                    return "snowy";
+                default:
+                    return "default";
+            }
         }
 
+        function renderWeatherPlaylist(main) {
+            const container = document.getElementById('weather-playlist');
+            if (!container) return;
 
+            const key = resolveWeatherKey(main || 'Default');
+            const playlistId =
+                WEATHER_SPOTIFY_EMBEDS[key] || WEATHER_SPOTIFY_EMBEDS['Default'];
 
-async function loadWeatherPlaylist(weather) {
-    // ログインしていなければ何もしない
-    if (!currentUserId) return;
+            if (!playlistId) {
+                container.innerHTML =
+                    `<div class="muted">プレイリストが設定されていません</div>`;
+                return;
+            }
 
-    // iframe が存在しないページでは何もしない
-    const iframe = document.getElementById("playlist-frame");
-    if (!iframe) {
-        // playlist ページなどではここに来る
-        return;
-    }
+            const src =
+                `https://open.spotify.com/embed/playlist/${encodeURIComponent(playlistId)}`;
 
-    try {
-        const res = await fetch(
-            `/api/weather-playlist/random?uid=${encodeURIComponent(currentUserId)}&weather=${encodeURIComponent(weather)}`
-        );
+            container.innerHTML = `
+      <div class="playlist-card" id="playlist-wrapper" style="background:#1e1e1e; padding:12px; border-radius:12px;">
+  <h4>天気に合わせたSpotifyプレイリスト</h4>
+  <iframe
+    id="playlist-frame"
+    style="border-radius:12px"
+    src="${src}"
+    width="100%"
+    height="352"
+    frameborder="0"
+    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+    loading="lazy">
+  </iframe>
+</div>
 
-        if (!res.ok) {
-            console.warn("[weather-playlist] response not ok:", res.status);
-            return;
-        }
-
-        const json = await res.json();
-
-        // DBに未登録ならデフォルトのまま
-        if (!json.found) {
-            console.log("DB未登録 → デフォルトのまま");
-            return;
-        }
-
-        // iframe を DB のプレイリストに差し替え
-        iframe.src =
-            `https://open.spotify.com/embed/playlist/${json.playlist.playlist_id}`;
-
-        console.log("iframe 更新:", json.playlist.playlist_id);
-
-    } catch (e) {
-        console.error("loadWeatherPlaylist error", e);
-    }
-}
-
-
-
-
-
-function renderWeatherPlaylistFromDB(weather, playlistId) {
-    const container = document.getElementById("weather-playlist");
-    if (!container) return;
-
-    const src =
-        `https://open.spotify.com/embed/playlist/${encodeURIComponent(playlistId)}`;
-
-    container.innerHTML = `
-      <div class="playlist-card">
-        <h4>あなたが登録したプレイリスト</h4>
-        <iframe
-          id="playlist-frame"
-          style="border-radius:12px"
-          src="${src}"
-          width="100%"
-          height="352"
-          frameborder="0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy">
-        </iframe>
-      </div>
     `;
-}
-
-
-    function weatherToDbKey(main) {
-    switch (main) {
-        case "Clear":
-            return "sunny";
-        case "Clouds":
-            return "cloudy";
-        case "Rain":
-        case "Drizzle":
-        case "Thunderstorm":
-            return "rainy";
-        case "Snow":
-            return "snowy";
-        default:
-            return "default";
-    }
-}
+        }
 
 
 
 
-  </script>
-  <script src="animation.js"></script>
+
+    </script>
+    <script src="animation.js"></script>
 </body>
+
 </html>
