@@ -479,7 +479,6 @@
                 const me = await api('/me');
 
                 currentUserId = me.id;
-                IS_PREMIUM = (me.product === 'premium');
 
                 console.log("login user:", currentUserId, "premium:", IS_PREMIUM);
 
@@ -572,21 +571,7 @@
             }
         }
 
-        window.onSpotifyWebPlaybackSDKReady = async () => {
-            const token = await fetchAccessToken(); if (!token) return;
-            spotifyPlayer = new Spotify.Player({
-                name: 'Weather BGM (Web Player)',
-                getOAuthToken: async cb => { const t = await fetchAccessToken(); if (t) cb(t); },
-                volume: 0.5
-            });
-            spotifyPlayer.addListener('initialization_error', ({ message }) => console.error(message));
-            spotifyPlayer.addListener('authentication_error', ({ message }) => console.error(message));
-            spotifyPlayer.addListener('account_error', ({ message }) => console.error(message));
-            spotifyPlayer.addListener('playback_error', ({ message }) => console.error(message));
-            spotifyPlayer.addListener('ready', ({ device_id }) => { spotifyDeviceId = device_id; });
-            spotifyPlayer.addListener('not_ready', ({ device_id }) => { });
-            await spotifyPlayer.connect();
-        };
+        
 
         const WEATHER_TO_QUERY = {
             'Clear': ['summer vibes', 'sunny chill', 'city pop'],
