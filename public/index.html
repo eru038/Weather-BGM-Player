@@ -889,13 +889,27 @@
 
         // ページ読み込み時に更新
         //updateNavLoginButton();
-        function addWeatherBtn(card, pl, registeredMap = {}) {
-    ["sunny", "cloudy"].forEach(w => {
+        async function addWeatherBtn(card, pl) {
+    ["sunny", "cloudy"].forEach(async (w) => {
 
-        // 登録状態（true = 登録済み）
-        let isReg = !!registeredMap[w];
+        let isReg = false;
 
         const btn = document.createElement("button");
+        btn.textContent = "確認中...";
+
+        // 初期状態チェック
+        try {
+            if (currentUserId) {
+                const res = await fetch(
+                    `/api/weather-playlist/check?uid=${encodeURIComponent(currentUserId)}&weather=${encodeURIComponent(w)}&pid=${encodeURIComponent(pl.id)}`
+                );
+
+                const json = await res.json();
+                isReg = !!json.registered;
+            }
+        } catch (e) {
+            console.warn("登録状態取得失敗", e);
+        }
 
         function updateBtn() {
             btn.textContent = isReg
