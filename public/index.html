@@ -692,38 +692,36 @@
         }
 
         async function getLocationWithFallback() {
-            // ① まず ipapi から位置情報を取得（IPベース）
-            try {
-                const resp = await fetch('https://ipapi.co/json/');
-                if (!resp.ok) {
-                    console.warn('[geo] ipapi status:', resp.status);
-                    throw new Error('ipapi status ' + resp.status);
-                }
+  try {
+    if (navigator.geolocation) {
+      const pos = await new Promise((res, rej) =>
+        navigator.geolocation.getCurrentPosition(res, rej, {
+          timeout: 5000
+        })
+      );
 
-                const j = await resp.json();
-                // ipapi は latitude / longitude / city を返してくれる
-                if (j && typeof j.latitude === 'number' && typeof j.longitude === 'number') {
-                    return {
-                        lat: j.latitude,
-                        lon: j.longitude,
-                        city: j.city || null,
-                        source: 'ipapi'
-                    };
-                }
+      return {
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+        source: "browser"
+      };
+    }
+  } catch (e) {
+    console.warn("[geo] browser geolocation failed");
+  }
 
-                throw new Error('ipapi response missing lat/lon');
-            } catch (e) {
-                console.warn('[geo] ipapi error, fallback to default Tokyo:', e);
+  // ipapi は CORS で失敗するため使用しない
+  // 理由: ブラウザから直接 fetch できない仕様
 
-                // ② ipapi がダメだった場合は東京駅付近をデフォルトにする
-                return {
-                    lat: 35.681236,
-                    lon: 139.767125,
-                    city: '東京(デフォルト)',
-                    source: 'default'
-                };
-            }
-        }
+  console.warn("[geo] fallback to default Tokyo");
+
+  return {
+    lat: 35.6895,
+    lon: 139.6917,
+    source: "default"
+  };
+}
+
 
 
         async function renderUserPlaylists() {
