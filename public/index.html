@@ -198,11 +198,7 @@
     <main id="content">
         <h1>Weather BGM Player</h1>
         <div id="weather-area"></div>
-        <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
-            <button class="spotify-btn" onclick="playWeatherOnSpotify()">天気に合わせてSpotifyで再生</button>
-            <!-- このボタンは埋め込みプレイヤーまでスクロールするだけに変更 -->
-            <button class="spotify-btn" style="background:#2b8a3e;" onclick="playWeatherLocally()">ブラウザでBGM再生</button>
-        </div>
+        
         <div id="weather-playlist" style="margin-top:24px;"></div>
         <div id="weather-player" style="margin-top:24px;"></div>
 
@@ -249,9 +245,7 @@
                     content.innerHTML = `
             <h1>Weather BGM Player</h1>
             <div id="weather-area"></div>
-            <div style="margin-top:16px;">
-              <button class="spotify-btn" onclick="playWeatherOnSpotify()"></button>
-            </div>
+            
             
             <div id="weather-playlist" style="margin-top:24px;"></div>
             
