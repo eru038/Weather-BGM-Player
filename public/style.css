@@ -24,4 +24,8 @@
     #player-bar .spacer{flex:1;}
     #premium-hint{display:none;margin-left:8px;opacity:.8;}
     #open-in-spotify{display:none;color:#1DB954;text-decoration:underline;}
+    #content h1 {
+        color: #ffffff !important;
+    }
   </style>
+
