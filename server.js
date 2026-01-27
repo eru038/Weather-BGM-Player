@@ -497,6 +497,23 @@ app.get("/__admin/viewdata", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+app.get("/__admin/cleardata", async (req, res) => {
+  try {
+    // weather_playlists テーブルの全データを削除
+    const result = await db.query(`DELETE FROM weather_playlists;`);
+
+    res.json({
+      message: "データベースの全データを削除しました。",
+      deletedRows: result.rowCount // 削除された件数を返す（PostgreSQLの場合）
+    });
+
+  } catch (err) {
+    res.status(500).json({ 
+      error: "削除に失敗しました", 
+      details: err.message 
+    });
+  }
+});
 
 // 登録済みチェック
 app.get("/api/weather-playlist/check", async (req, res) => {
