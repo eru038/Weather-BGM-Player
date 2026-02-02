@@ -113,6 +113,9 @@ app.get('/login', (req,res)=>{
     'user-read-email', // ユーザー識別用
     'user-read-private', // 国コード等の取得
     'playlist-read-private', // 非公開プレイリストの取得
+    'playlist-modify-private',
+    'playlist-modify-public'
+
   ].join(' ');
 
 
