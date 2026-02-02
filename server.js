@@ -110,14 +110,9 @@ app.get('/ping', (req,res) => res.json({ ok: true }));
 app.get('/login', (req,res)=>{
   const from = req.query.from || 'home';
   const scope = [
-  'user-read-email',
-  'user-read-private',
-  'streaming',
-  'user-modify-playback-state',
-  'user-read-playback-state',
-  'playlist-read-private',
-  'playlist-modify-private',
-  'playlist-modify-public'
+    'user-read-email', // ユーザー識別用
+    'user-read-private', // 国コード等の取得
+    'playlist-read-private', // 非公開プレイリストの取得
   ].join(' ');
 
 
