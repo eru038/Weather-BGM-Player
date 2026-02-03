@@ -359,17 +359,7 @@
             if (main === "Rain" || main === "Drizzle") {
                 return { label: "雨", key: "rainy", icon: "🌧️", accent: "#4a90e2" };
             }
-            if (main === "Snow") {
-                return { label: "雪", key: "snowy", icon: "❄️", accent: "#00bcd4" };
-            }
-            if (main === "Thunderstorm") {
-                return { label: "雷雨", key: "rainy", icon: "⛈️", accent: "#3b3b98" };
-            }
-            if (main === "Mist" || main === "Fog") {
-                return { label: "霧", key: "cloudy", icon: "🌫️", accent: "#aab2bd" };
-            }
-
-            return { label: "天気", key: "default", icon: "🌈", accent: "#1db954" };
+            
         }
 
         async function loadWeather() {
