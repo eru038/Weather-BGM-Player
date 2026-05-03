@@ -73,11 +73,25 @@ app.use((req, _res, next) => {
   next();
 });
 
-function setAuthCookies(res, access_token, expires_in, refresh_token){
-  const maxAge = Math.max(1, parseInt(expires_in||3600,10)-30)*1000;
-  res.cookie('access_token', access_token, { httpOnly: true, sameSite: 'lax', secure: false, maxAge });
-  if(refresh_token){
-    res.cookie('refresh_token', refresh_token, { httpOnly: true, sameSite: 'lax', secure: false, maxAge: 30*24*3600*1000 });
+function setAuthCookies(res, access_token, expires_in, refresh_token) {
+  const maxAge = Math.max(1, parseInt(expires_in || 3600, 10) - 30) * 1000;
+
+  res.cookie('access_token', access_token, {
+    httpOnly: true,
+    sameSite: 'none',
+    secure: true,
+    maxAge
+  });
+  // HTTPS環境(Render)用
+
+  if (refresh_token) {
+    res.cookie('refresh_token', refresh_token, {
+      httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+      maxAge: 30 * 24 * 3600 * 1000
+    });
+    // リフレッシュトークン保存
   }
 }
 
