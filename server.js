@@ -110,13 +110,30 @@ app.get('/ping', (req,res) => res.json({ ok: true }));
 app.get('/login', (req,res)=>{
   const from = req.query.from || 'home';
   const scope = [
-    'user-read-email', // ユーザー識別用
-    'user-read-private', // 国コード等の取得
-    'playlist-read-private', // 非公開プレイリストの取得
-    'playlist-modify-private',
-    'playlist-modify-public'
+  'user-read-email',
+  // ユーザー識別用
 
-  ].join(' ');
+  'user-read-private',
+  // 国コードなど取得
+
+  'playlist-read-private',
+  // 非公開プレイリスト取得
+
+  'playlist-modify-private',
+  // 非公開プレイリスト編集
+
+  'playlist-modify-public',
+  // 公開プレイリスト編集
+
+  'streaming',
+  // Web Playback SDK利用
+
+  'user-read-playback-state',
+  // 再生状態取得
+
+  'user-modify-playback-state'
+  // 再生操作
+].join(' ');
 
 
   const params = new URLSearchParams({
